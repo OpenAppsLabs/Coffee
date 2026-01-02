@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun Card(
+fun CoffeeCard(
     title: String,
     description: String,
     modifier: Modifier = Modifier
