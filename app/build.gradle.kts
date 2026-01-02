@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
@@ -13,6 +15,23 @@ android {
         version = release(36)
     }
 
+    signingConfigs {
+        create("release") {
+            val localPropertiesFile = rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                val properties = Properties()
+                properties.load(FileInputStream(localPropertiesFile))
+                val keyPath = properties.getProperty("storeFile")
+                if (keyPath != null) {
+                    storeFile = file(keyPath)
+                    storePassword = properties.getProperty("COFFEE_KEYSTORE_PASSWORD")
+                    keyAlias = properties.getProperty("COFFEE_KEY_ALIAS")
+                    keyPassword = properties.getProperty("COFFEE_KEY_PASSWORD")
+                }
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.openappslabs.coffee"
         minSdk = 29
@@ -25,13 +44,17 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (rootProject.file("local.properties").exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
