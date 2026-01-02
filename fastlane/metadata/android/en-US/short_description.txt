@@ -1,1 +1,1 @@
-Coffee - Keep Your Screen Awake, Coffee is a lightweight Android utility app that prevents your screen from dimming or locking during reading, navigation, or focused work sessions.
+Coffee - A lightweight app that prevents your screen from dimming or locking.
