@@ -1,0 +1,13 @@
+Unlock the full potential of your focus sessions with Coffee, this simple utility keeps your screen awake right when you need it.
+
+Most devices auto-dim screens to save battery during reading, navigation, or recipes. However, this can be frustrating when you need the display on. Coffee lets you lock the screen awake easily.
+
+<b>Features:</b>
+
+- One-tap Quick Settings tile toggle.
+- Force screen awake with custom timers or indefinite.
+- Lightweight with no ads.
+
+<b>Important Note:</b>
+
+Screen awake mode uses foreground service and WAKE_LOCK, which may impact battery. Toggle off when done.
