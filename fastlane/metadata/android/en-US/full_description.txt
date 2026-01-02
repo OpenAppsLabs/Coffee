@@ -1,4 +1,4 @@
-Unlock the full potential of your focus sessions with Coffee, this simple utility keeps your screen awake right when you need it.
+Keep your screen awake with Coffee, this simple utility keeps your screen awake right when you need it.
 
 Most devices auto-dim screens to save battery during reading, navigation, or recipes. However, this can be frustrating when you need the display on. Coffee lets you lock the screen awake easily.
 
