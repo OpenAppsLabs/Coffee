@@ -4,12 +4,13 @@ import android.content.Intent
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import androidx.core.content.ContextCompat
-import com.openappslabs.coffee.data.CoffeeManager
+import com.openappslabs.coffee.data.CoffeeDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class CoffeeTileService : TileService() {
@@ -23,8 +24,8 @@ class CoffeeTileService : TileService() {
         observationJob?.cancel()
         observationJob = serviceScope.launch {
             combine(
-                CoffeeManager.observeIsActive(this@CoffeeTileService),
-                CoffeeManager.observeDuration(this@CoffeeTileService)
+                CoffeeDataStore.observeIsActive(this@CoffeeTileService),
+                CoffeeDataStore.observeDuration(this@CoffeeTileService)
             ) { isActive, duration ->
                 isActive to duration
             }.collect { (isActive, duration) ->
@@ -47,24 +48,26 @@ class CoffeeTileService : TileService() {
     override fun onClick() {
         super.onClick()
 
-        val isCurrentlyRunning = try { CoffeeService.isRunning } catch (e: Exception) { false }
-        val newState = !isCurrentlyRunning
-        val duration = CoffeeManager.getSelectedDuration(this)
+        serviceScope.launch {
+            val isCurrentlyActive = CoffeeDataStore.observeIsActive(this@CoffeeTileService).first()
+            val newState = !isCurrentlyActive
+            val duration = CoffeeDataStore.observeDuration(this@CoffeeTileService).first()
 
-        CoffeeManager.setCoffeeActive(this, newState)
+            CoffeeDataStore.setCoffeeActive(this@CoffeeTileService, newState)
 
-        val serviceIntent = Intent(this, CoffeeService::class.java).apply {
-            if (newState) {
-                putExtra(CoffeeService.EXTRA_DURATION_MINUTES, duration)
-            } else {
-                action = CoffeeService.ACTION_STOP
+            val serviceIntent = Intent(this@CoffeeTileService, CoffeeService::class.java).apply {
+                if (newState) {
+                    putExtra(CoffeeService.EXTRA_DURATION_MINUTES, duration)
+                } else {
+                    action = CoffeeService.ACTION_STOP
+                }
             }
-        }
 
-        if (newState) {
-            ContextCompat.startForegroundService(this, serviceIntent)
-        } else {
-            startService(serviceIntent)
+            if (newState) {
+                ContextCompat.startForegroundService(this@CoffeeTileService, serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
         }
     }
 

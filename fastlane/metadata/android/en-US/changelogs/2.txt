@@ -1,0 +1,11 @@
+### [NEW]
+- Data Migration: Migrated to Jetpack DataStore for faster, safer, and more reliable data handling.
+- Improved Sync: Enhanced real-time synchronization between the app UI and Quick Settings Tile.
+
+### [CHANGES]
+- Internal Refactor: Significant architectural improvements for better performance and maintainability.
+- Service Optimization: Optimized background service and wake lock management to ensure efficiency.
+
+### [FIXES]
+- Boot Consistency: Improved state handling after device reboots and app updates.
+- UI Performance: Resolved potential sync delays when toggling states.
