@@ -32,10 +32,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,12 +46,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.openappslabs.coffee.R
-import com.openappslabs.coffee.data.CoffeeManager
+import com.openappslabs.coffee.data.CoffeeDataStore
 import com.openappslabs.coffee.services.CoffeeService
 import com.openappslabs.coffee.services.CoffeeTileService
 import com.openappslabs.coffee.ui.components.CoffeeAlertDialog
 import com.openappslabs.coffee.ui.components.CoffeeCard
 import com.openappslabs.coffee.ui.components.SplitButton
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,31 +61,14 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
-
+    val scope = rememberCoroutineScope()
     var showSettingsDialog by remember { mutableStateOf(false) }
-
+    var hasAskedPermission by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (!isGranted) {
-            val shouldShowRationale = activity?.let {
-                ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.POST_NOTIFICATIONS)
-            } ?: false
-
-            if (!shouldShowRationale) {
-                showSettingsDialog = true
-            } else {
-                Toast.makeText(context, "Notification permission is required.", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val isGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-            if (!isGranted) {
-                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
+            Toast.makeText(context, "Notification permission is required to show status.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -147,13 +131,26 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 onToggle = { isActive, durationMinutes ->
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        val permission = Manifest.permission.POST_NOTIFICATIONS
+                        if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                            
+                            val shouldShowRationale = activity?.let {
+                                ActivityCompat.shouldShowRequestPermissionRationale(it, permission)
+                            } ?: false
+
+                            if (!shouldShowRationale && hasAskedPermission) {
+                                showSettingsDialog = true
+                            } else {
+                                hasAskedPermission = true
+                                permissionLauncher.launch(permission)
+                            }
                             return@SplitButton false
                         }
                     }
 
-                    toggleCoffeeService(context, isActive, durationMinutes)
+                    scope.launch {
+                        toggleCoffeeService(context, isActive, durationMinutes)
+                    }
                     true
                 },
                 onDurationChange = { updateTileState(context) }
@@ -176,7 +173,9 @@ fun HomeScreen(
                         Toast.makeText(context, "Add tile manually in settings", Toast.LENGTH_SHORT).show()
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -189,8 +188,8 @@ fun HomeScreen(
     }
 }
 
-private fun toggleCoffeeService(context: Context, isActive: Boolean, duration: Int) {
-    CoffeeManager.setCoffeeActive(context, isActive)
+private suspend fun toggleCoffeeService(context: Context, isActive: Boolean, duration: Int) {
+    CoffeeDataStore.setCoffeeActive(context, isActive)
 
     val intent = Intent(context, CoffeeService::class.java).apply {
         if (isActive) {

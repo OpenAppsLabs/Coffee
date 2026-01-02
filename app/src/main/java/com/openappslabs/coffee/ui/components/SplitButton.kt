@@ -15,12 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.openappslabs.coffee.data.CoffeeManager
+import com.openappslabs.coffee.data.CoffeeDataStore
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -29,14 +31,14 @@ fun SplitButton(
     onToggle: (Boolean, Int) -> Boolean,
     onDurationChange: (Int) -> Unit = {}
 ) {
-
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    val isActive by CoffeeManager.observeIsActive(context).collectAsStateWithLifecycle(
-        initialValue = CoffeeManager.isCoffeeActive(context)
+    val isActive by CoffeeDataStore.observeIsActive(context).collectAsStateWithLifecycle(
+        initialValue = false
     )
-    val selectedTime by CoffeeManager.observeDuration(context).collectAsStateWithLifecycle(
-        initialValue = CoffeeManager.getSelectedDuration(context)
+    val selectedTime by CoffeeDataStore.observeDuration(context).collectAsStateWithLifecycle(
+        initialValue = 5
     )
 
     var showPopup by remember { mutableStateOf(false) }
@@ -89,7 +91,9 @@ fun SplitButton(
         TimeSelectionDialog(
             currentMinutes = selectedTime,
             onTimeSelected = { newTime ->
-                CoffeeManager.setSelectedDuration(context, newTime)
+                scope.launch {
+                    CoffeeDataStore.setSelectedDuration(context, newTime)
+                }
                 onDurationChange(newTime)
                 showPopup = false
                 if (isActive) {
