@@ -81,5 +81,10 @@ Coffee is licensed under the [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0
 
 ---
 
+## 🙏 Inspiration
+Proudly inspired by the original [Coffee by @mueller-ma](https://github.com/mueller-ma/Coffee)
+<br>
+I have been using [@mueller-ma's Coffee](https://github.com/mueller-ma/Coffee) for long time. 
+
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/OpenAppsLabs/Coffee.svg?variant=adaptive)](https://starchart.cc/OpenAppsLabs/Coffee)
