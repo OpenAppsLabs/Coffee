@@ -1,4 +1,8 @@
-<h1 align="center">☕ Coffee</h1>
+<h1 align="center">Coffee</h1>
+
+<p align="center">
+    <img src="assets/images/hero-image.png" alt="Hero Banner"/>
+</p>
 
 **Keep Screen Awake**
 
