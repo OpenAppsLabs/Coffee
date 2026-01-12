@@ -33,16 +33,14 @@ fun SplitButton(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    val isActive by CoffeeDataStore.observeIsActive(context).collectAsStateWithLifecycle(
+    val dataStore = remember { CoffeeDataStore(context.applicationContext) }
+    val isActive by dataStore.observeIsActive().collectAsStateWithLifecycle(
         initialValue = false
     )
-    val selectedTime by CoffeeDataStore.observeDuration(context).collectAsStateWithLifecycle(
+    val selectedTime by dataStore.observeDuration().collectAsStateWithLifecycle(
         initialValue = 5
     )
-
     var showPopup by remember { mutableStateOf(false) }
-
     val toggleColors = ButtonDefaults.buttonColors(
         containerColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerLow,
         contentColor = if (isActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
@@ -92,12 +90,12 @@ fun SplitButton(
             currentMinutes = selectedTime,
             onTimeSelected = { newTime ->
                 scope.launch {
-                    CoffeeDataStore.setSelectedDuration(context, newTime)
-                }
-                onDurationChange(newTime)
-                showPopup = false
-                if (isActive) {
-                    onToggle(true, newTime)
+                    dataStore.setSelectedDuration(newTime)
+                    onDurationChange(newTime)
+                    showPopup = false
+                    if (isActive) {
+                        onToggle(true, newTime)
+                    }
                 }
             },
             onDismiss = { showPopup = false }

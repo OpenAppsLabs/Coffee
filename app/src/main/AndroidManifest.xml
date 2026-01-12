@@ -25,7 +25,7 @@
             android:theme="@style/Theme.Coffee">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -62,6 +62,30 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".widgets.CoffeeWidgetReceiver"
+            android:label="Coffee"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/coffee_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.NothingCoffeeWidgetReceiver"
+            android:label="Nothing Coffee"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/nothing_coffee_widget_info" />
         </receiver>
 
     </application>
