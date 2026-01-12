@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun CoffeeAlertDialog(
@@ -36,8 +37,7 @@ fun CoffeeAlertDialog(
 ) {
     val outerRadius = 24.dp
     val innerRadius = 4.dp
-
-    val confirmShape = remember(dismissButtonText) {
+    val confirmShape = remember(dismissButtonText != null) {
         if (dismissButtonText != null) {
             RoundedCornerShape(
                 topStart = outerRadius, topEnd = outerRadius,
@@ -55,13 +55,19 @@ fun CoffeeAlertDialog(
         )
     }
 
-    Dialog(onDismissRequest = onDismissRequest) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = true)
+    ) {
         Card(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
-            )
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -71,21 +77,20 @@ fun CoffeeAlertDialog(
             ) {
                 Text(
                     text = title,
-                    modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
                     text = text,
-                    modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.1f
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -98,7 +103,7 @@ fun CoffeeAlertDialog(
                 )
 
                 if (dismissButtonText != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     CoffeeDialogButton(
                         text = dismissButtonText,
                         onClick = { onDismissClick?.invoke() },
@@ -122,7 +127,7 @@ private fun CoffeeDialogButton(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.dp),
+            .height(56.dp),
         shape = shape,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (isPrimary)
@@ -134,12 +139,12 @@ private fun CoffeeDialogButton(
             else
                 MaterialTheme.colorScheme.onSurface
         ),
-        contentPadding = PaddingValues(0.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
     }
 }
