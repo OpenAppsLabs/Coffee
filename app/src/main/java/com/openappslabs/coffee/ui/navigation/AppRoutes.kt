@@ -9,5 +9,4 @@ sealed interface Screen {
 
     @Serializable
     data object About : Screen
-
 }

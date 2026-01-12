@@ -12,7 +12,10 @@ import com.openappslabs.coffee.ui.screens.homescreen.HomeScreen
 
 @Composable
 fun AppNavGraph(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    appWidgetId: Int,
+    openWidgetSheet: Boolean = false,
+    initialVariant: String = "Normal"
 ) {
     val onAboutClick = remember(navController) {
         {
@@ -38,14 +41,24 @@ fun AppNavGraph(
         navController = navController,
         startDestination = Screen.Home
     ) {
-        homeScreenRoute(onAboutClick = onAboutClick)
+        homeScreenRoute(onAboutClick = onAboutClick, appWidgetId = appWidgetId, openWidgetSheet = openWidgetSheet, initialVariant = initialVariant)
         aboutScreenRoute(onBackClick = onBackClick)
     }
 }
 
-private fun NavGraphBuilder.homeScreenRoute(onAboutClick: () -> Unit) {
+private fun NavGraphBuilder.homeScreenRoute(
+    onAboutClick: () -> Unit,
+    appWidgetId: Int,
+    openWidgetSheet: Boolean,
+    initialVariant: String
+) {
     composable<Screen.Home> {
-        HomeScreen(onAboutClick = onAboutClick)
+        HomeScreen(
+            onAboutClick = onAboutClick,
+            appWidgetId = appWidgetId,
+            openWidgetSheet = openWidgetSheet,
+            initialVariant = initialVariant
+        )
     }
 }
 
