@@ -8,6 +8,7 @@ import com.openappslabs.coffee.data.CoffeeDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -15,8 +16,10 @@ import kotlinx.coroutines.launch
 
 class CoffeeTileService : TileService() {
 
-    private val serviceScope = CoroutineScope(Dispatchers.Main.immediate + Job())
+    private val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private var observationJob: Job? = null
+
+    private val dataStore by lazy { CoffeeDataStore(applicationContext) }
 
     override fun onStartListening() {
         super.onStartListening()
@@ -24,8 +27,8 @@ class CoffeeTileService : TileService() {
         observationJob?.cancel()
         observationJob = serviceScope.launch {
             combine(
-                CoffeeDataStore.observeIsActive(this@CoffeeTileService),
-                CoffeeDataStore.observeDuration(this@CoffeeTileService)
+                dataStore.observeIsActive(),
+                dataStore.observeDuration()
             ) { isActive, duration ->
                 isActive to duration
             }.collect { (isActive, duration) ->
@@ -49,11 +52,11 @@ class CoffeeTileService : TileService() {
         super.onClick()
 
         serviceScope.launch {
-            val isCurrentlyActive = CoffeeDataStore.observeIsActive(this@CoffeeTileService).first()
+            val isCurrentlyActive = dataStore.observeIsActive().first()
+            val duration = dataStore.observeDuration().first()
             val newState = !isCurrentlyActive
-            val duration = CoffeeDataStore.observeDuration(this@CoffeeTileService).first()
 
-            CoffeeDataStore.setCoffeeActive(this@CoffeeTileService, newState)
+            dataStore.setCoffeeActive(newState)
 
             val serviceIntent = Intent(this@CoffeeTileService, CoffeeService::class.java).apply {
                 if (newState) {
@@ -73,6 +76,7 @@ class CoffeeTileService : TileService() {
 
     private fun updateTileState(isActive: Boolean, duration: Int) {
         val tile = qsTile ?: return
+
         tile.state = if (isActive) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.subtitle = when {
             !isActive -> "Off"
