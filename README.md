@@ -4,6 +4,14 @@
     <img src="assets/images/hero-image.png" alt="Hero Banner"/>
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/OpenAppsLabs/Coffee?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/downloads/OpenAppsLabs/Coffee/total?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/stars/OpenAppsLabs/Coffee?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/forks/OpenAppsLabs/Coffee?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/license/OpenAppsLabs/Coffee?style=for-the-badge&logo=GitHub&color=%23000000"/>
+</p>
+
 **Keep Screen Awake**
 
 Coffee is a modern, open-source Android utility built with Jetpack Compose and Material Design 3. It provides a Quick Settings tile to prevent screen dimming or locking during reading, navigation, or focused tasks, with customizable timers including indefinite mode.
