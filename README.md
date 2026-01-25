@@ -26,7 +26,17 @@ Get the latest version of **Coffee**:
 
 <p align="center">
   <a href="https://github.com/OpenAppsLabs/Coffee/releases/latest/download/app-release.apk">
-    <img src="https://raw.githubusercontent.com/vadret/android/master/assets/get-github.png" alt="Get it on GitHub" height="100"/>
+    <img src="assets/badges/get-it-on-github.png" alt="Get it on GitHub" height="100"/>
+  </a>
+  <a href="https://apt.izzysoft.de/fdroid/index/apk/com.openappslabs.coffee">
+    <img src="assets/badges/get-it-on-izzyondroid.png" alt="Get it on IzzyOnDroid" height="100"/>
+  </a>
+<br>
+  <a href="https://www.openapk.net/5g/com.openappslabs.coffee/">
+    <img src="assets/badges/get-it-on-openapk.png" alt="Get it on OpenAPK" height="100"/>
+  </a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/OpenAppsLabs/Coffee">
+    <img src="assets/badges/get-it-on-obtainium.png" alt="Get it on Obtainium" height="100"/>
   </a>
 </p>
 
