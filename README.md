@@ -68,14 +68,12 @@ Get the latest version of **Coffee**:
 
 ## 🤝 Contributing
 
-I welcome contributions! To keep the project organized and maintainable, please follow these guidelines:
+Contributions are welcome!
 
-1. **Fork the repository** and create a branch.
-2. **Work on a single feature or fix per branch/PR.** Avoid mixing multiple features or unrelated changes in one Pull Request.
-3. **Write clear commit messages.**
-4. **Ensure code quality:** Follow Kotlin coding conventions and Compose best practices.
-5. **Test your changes locally** before submitting.
-6. **Open a Pull Request** against the main branch of this repository. Include a description of your changes and any relevant screenshots or notes.
+- Fork the repo and create a branch  
+- Keep changes small and focused  
+- Test before submitting  
+- Open a PR to `master`  
 
 ---
 
@@ -86,8 +84,6 @@ If you encounter any bugs, issues, or unexpected behavior while using Coffee, pl
 When reporting a bug, please include:
 
 - Steps to reproduce the issue
-- Expected behavior
-- Actual behavior
 - Device/Android version
 - Screenshots (if applicable)
 
@@ -104,9 +100,4 @@ Coffee is licensed under the [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0
 ---
 
 ## 🙏 Inspiration
-Proudly inspired by the original [Coffee by @mueller-ma](https://github.com/mueller-ma/Coffee)
-<br>
-I have been using [@mueller-ma's Coffee](https://github.com/mueller-ma/Coffee) for long time. 
-
-## Stargazers over time
-[![Stargazers over time](https://starchart.cc/OpenAppsLabs/Coffee.svg?variant=adaptive)](https://starchart.cc/OpenAppsLabs/Coffee)
+Inspired by the OG [Coffee by @mueller-ma](https://github.com/mueller-ma/Coffee)
