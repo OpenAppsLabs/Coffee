@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.dp
 import com.openappslabs.coffee.BuildConfig
 import com.openappslabs.coffee.R
 import java.time.Year
+import androidx.core.net.toUri
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +53,7 @@ fun AboutScreen(
     onBackClick: () -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
-
+    val context = LocalContext.current
     val primaryContainer = MaterialTheme.colorScheme.primaryContainer
     val primary = MaterialTheme.colorScheme.primary
     val iconBackgroundBrush = remember(primaryContainer, primary) {
@@ -183,6 +186,20 @@ fun AboutScreen(
                         icon = painterResource(id = R.drawable.scale),
                         label = "View License",
                         onClick = { uriHandler.openUri("https://www.gnu.org/licenses/gpl-3.0.en.html") }
+                    )
+                    AboutDivider()
+                    ActionItem(
+                        icon = painterResource(id = R.drawable.mail),
+                        label = "Support",
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = "mailto:openappslabs@gmail.com".toUri()
+                            }
+                            try {
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                            }
+                        }
                     )
                 }
             }

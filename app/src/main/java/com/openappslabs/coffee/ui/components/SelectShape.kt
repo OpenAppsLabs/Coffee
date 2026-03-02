@@ -7,21 +7,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,22 +35,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.openappslabs.coffee.ui.theme.WidgetExpressiveLibrary
 
+private val CardShape = RoundedCornerShape(28.dp)
+private val ItemShape = RoundedCornerShape(16.dp)
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SelectShape(
     selectedShapeName: String,
     onShapeSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val rawShapes = WidgetExpressiveLibrary.getAllShapes()
-    val shapes = remember(rawShapes) { rawShapes }
-    val shapesList = remember(shapes) { shapes.toList() }
-    val currentSelection by remember(selectedShapeName, shapes) {
-        derivedStateOf {
-            if (selectedShapeName.isEmpty() && shapes.isNotEmpty()) {
-                shapes.keys.first()
-            } else {
-                selectedShapeName
-            }
+    val rawPolygonList = remember { WidgetExpressiveLibrary.getRawPolygons().toList() }
+
+    val currentSelection = remember(selectedShapeName) {
+        if (selectedShapeName.isEmpty() && rawPolygonList.isNotEmpty()) {
+            rawPolygonList.first().first
+        } else {
+            selectedShapeName
         }
     }
 
@@ -58,42 +60,39 @@ fun SelectShape(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        shape = RoundedCornerShape(28.dp)
+        shape = CardShape
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
         ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Text(
-                    text = "Widget Shapes",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Choose a unique shape for your next coffee widget",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = "Widget Shapes",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(5),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(
-                    items = shapesList,
+                    items = rawPolygonList,
                     key = { it.first },
                     contentType = { "shape_item" }
-                ) { (name, shape) ->
+                ) { (name, polygon) ->
+                    val shape = polygon.toShape()
                     ShapeItem(
-                        name = name,
                         shape = shape,
                         isSelected = name == currentSelection,
                         onClick = { onShapeSelected(name) }
@@ -106,22 +105,30 @@ fun SelectShape(
 
 @Composable
 private fun ShapeItem(
-    name: String,
     shape: Shape,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
+    val backgroundColor = if (isSelected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        Color.Transparent
+    }
+    val shapeColor = if (isSelected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(96.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(
-                if (isSelected) MaterialTheme.colorScheme.secondaryContainer
-                else Color.Transparent
-            )
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+            .aspectRatio(1f)
+            .clip(ItemShape)
+            .background(backgroundColor)
             .clickable {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onClick()
@@ -132,21 +139,7 @@ private fun ShapeItem(
             modifier = Modifier
                 .size(48.dp)
                 .clip(shape)
-                .background(
-                    if (isSelected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.surfaceVariant
-                ),
-            contentAlignment = Alignment.Center
-        ) { }
-
-        Text(
-            text = name,
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(top = 8.dp),
-            color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                .background(shapeColor)
         )
     }
 }

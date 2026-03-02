@@ -1,5 +1,8 @@
 package com.openappslabs.coffee.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,11 +21,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.openappslabs.coffee.data.CoffeeDataStore
 import kotlinx.coroutines.launch
+
+private val ColorAnimationSpec = tween<Color>(durationMillis = 250, easing = FastOutSlowInEasing)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -34,27 +40,49 @@ fun SplitButton(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val dataStore = remember { CoffeeDataStore(context.applicationContext) }
-    val isActive by dataStore.observeIsActive().collectAsStateWithLifecycle(
-        initialValue = false
+
+    val coffeeState by dataStore.coffeeState.collectAsStateWithLifecycle(
+        initialValue = com.openappslabs.coffee.data.CoffeeState()
     )
-    val selectedTime by dataStore.observeDuration().collectAsStateWithLifecycle(
-        initialValue = 5
-    )
+
     var showPopup by remember { mutableStateOf(false) }
+
+    val animatedContainerColor by animateColorAsState(
+        targetValue = if (coffeeState.isActive)
+            MaterialTheme.colorScheme.primary
+        else
+            MaterialTheme.colorScheme.surfaceContainerLow,
+        animationSpec = ColorAnimationSpec,
+        label = "ContainerColorAnimation"
+    )
+
+    val animatedContentColor by animateColorAsState(
+        targetValue = if (coffeeState.isActive)
+            MaterialTheme.colorScheme.onPrimary
+        else
+            MaterialTheme.colorScheme.onSurface,
+        animationSpec = ColorAnimationSpec,
+        label = "ContentColorAnimation"
+    )
+
     val toggleColors = ButtonDefaults.buttonColors(
-        containerColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerLow,
-        contentColor = if (isActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+        containerColor = animatedContainerColor,
+        contentColor = animatedContentColor
     )
 
     SplitButtonLayout(
-        modifier = modifier.fillMaxWidth().height(48.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp),
         spacing = 4.dp,
         leadingButton = {
-            Row(modifier = Modifier.fillMaxHeight().fillMaxWidth(0.5f)) {
+            Row(modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(0.5f)) {
                 SplitButtonDefaults.LeadingButton(
                     onClick = {
-                        val newState = !isActive
-                        onToggle(newState, selectedTime)
+                        val newState = !coffeeState.isActive
+                        onToggle(newState, coffeeState.duration)
                     },
                     modifier = Modifier.fillMaxSize(),
                     colors = toggleColors
@@ -68,7 +96,9 @@ fun SplitButton(
             }
         },
         trailingButton = {
-            Row(modifier = Modifier.fillMaxHeight().fillMaxWidth()) {
+            Row(modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth()) {
                 SplitButtonDefaults.TrailingButton(
                     checked = showPopup,
                     onCheckedChange = { showPopup = it },
@@ -76,7 +106,7 @@ fun SplitButton(
                     colors = toggleColors
                 ) {
                     Text(
-                        text = if (selectedTime == 0) "∞" else "$selectedTime Minutes",
+                        text = if (coffeeState.duration == 0) "∞" else "${coffeeState.duration} Minutes",
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1
                     )
@@ -87,13 +117,13 @@ fun SplitButton(
 
     if (showPopup) {
         TimeSelectionDialog(
-            currentMinutes = selectedTime,
+            currentMinutes = coffeeState.duration,
             onTimeSelected = { newTime ->
                 scope.launch {
                     dataStore.setSelectedDuration(newTime)
                     onDurationChange(newTime)
                     showPopup = false
-                    if (isActive) {
+                    if (coffeeState.isActive) {
                         onToggle(true, newTime)
                     }
                 }

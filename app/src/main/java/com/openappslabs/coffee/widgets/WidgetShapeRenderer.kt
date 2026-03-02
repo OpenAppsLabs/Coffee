@@ -14,11 +14,6 @@ import com.openappslabs.coffee.ui.theme.WidgetExpressiveLibrary
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 object WidgetShapeRenderer {
-    private val matrix = Matrix()
-    private val paint = Paint().apply {
-        isAntiAlias = true
-        style = Paint.Style.FILL
-    }
 
     fun createShapeBitmap(
         shapeName: String,
@@ -31,6 +26,10 @@ object WidgetShapeRenderer {
         val bitmap = createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
+        val paint = Paint().apply {
+            isAntiAlias = true
+            style = Paint.Style.FILL
+        }
         paint.color = color.toArgb()
 
         if (shapeName == "Square") {
@@ -41,8 +40,9 @@ object WidgetShapeRenderer {
             val polygon = polygons[shapeName] ?: MaterialShapes.Circle
             val path = polygon.toPath()
 
-            matrix.reset()
-            matrix.postScale(w.toFloat(), h.toFloat())
+            val matrix = Matrix().apply {
+                postScale(w.toFloat(), h.toFloat())
+            }
 
             path.transform(matrix)
 

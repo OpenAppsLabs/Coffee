@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import com.openappslabs.coffee.ui.navigation.AppNavGraph
 import com.openappslabs.coffee.ui.theme.CoffeeTheme
 import com.openappslabs.coffee.widgets.NothingCoffeeWidgetReceiver
+import com.openappslabs.coffee.data.CoffeeDataStore
+import androidx.compose.runtime.remember
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,11 +31,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CoffeeTheme {
+                val dataStore = remember { CoffeeDataStore(this@MainActivity.applicationContext) }
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     AppNavGraph(
+                        dataStore = dataStore,
                         appWidgetId = appWidgetId,
                         openWidgetSheet = openWidgetSheet,
                         initialVariant = if (isNothingVariant) "Nothing" else "Normal"

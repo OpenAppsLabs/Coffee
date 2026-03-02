@@ -33,26 +33,19 @@ fun CoffeeAlertDialog(
     text: String,
     modifier: Modifier = Modifier,
     dismissButtonText: String? = null,
-    onDismissClick: (() -> Unit)? = null,
+    onDismissClick: () -> Unit = onDismissRequest,
 ) {
-    val outerRadius = 24.dp
-    val innerRadius = 4.dp
-    val confirmShape = remember(dismissButtonText != null) {
-        if (dismissButtonText != null) {
+    val hasDismissButton = dismissButtonText != null
+
+    val confirmShape = remember(hasDismissButton) {
+        if (hasDismissButton) {
             RoundedCornerShape(
-                topStart = outerRadius, topEnd = outerRadius,
-                bottomStart = innerRadius, bottomEnd = innerRadius
+                topStart = 24.dp, topEnd = 24.dp,
+                bottomStart = 4.dp, bottomEnd = 4.dp
             )
         } else {
-            RoundedCornerShape(outerRadius)
+            RoundedCornerShape(24.dp)
         }
-    }
-
-    val dismissShape = remember {
-        RoundedCornerShape(
-            topStart = innerRadius, topEnd = innerRadius,
-            bottomStart = outerRadius, bottomEnd = outerRadius
-        )
     }
 
     Dialog(
@@ -102,11 +95,18 @@ fun CoffeeAlertDialog(
                     isPrimary = true
                 )
 
-                if (dismissButtonText != null) {
+                if (hasDismissButton) {
+                    val dismissShape = remember {
+                        RoundedCornerShape(
+                            topStart = 4.dp, topEnd = 4.dp,
+                            bottomStart = 24.dp, bottomEnd = 24.dp
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(6.dp))
                     CoffeeDialogButton(
                         text = dismissButtonText,
-                        onClick = { onDismissClick?.invoke() },
+                        onClick = onDismissClick,
                         shape = dismissShape,
                         isPrimary = false
                     )
@@ -121,11 +121,12 @@ private fun CoffeeDialogButton(
     text: String,
     onClick: () -> Unit,
     shape: Shape,
-    isPrimary: Boolean
+    isPrimary: Boolean,
+    modifier: Modifier = Modifier
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(56.dp),
         shape = shape,
