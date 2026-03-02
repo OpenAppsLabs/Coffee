@@ -1,0 +1,22 @@
+Coffee 1.2.0
+
+🚀 New Features
+🎨 Brand New Home Screen Widget
+🟣 20+ Expressive Shapes — Personalize your style with 20+ widget shapes
+🧩 Two Widget Variants — Choose the type that fits you
+✨ Smooth Shape & Color Animations
+🆕 Onboarding Experience — Smoother first-time setup with permissions
+⏱️ Extend Session — Add more time without restarting
+🔋 Battery Optimization Helper — Helps keep your timer running reliably
+🧩 Improved Quick Settings Tile — More responsive and reliable
+
+🛠️ Fixes
+📱 Fixed an issue where Coffee wasn’t working as expected in some devices
+
+🎨 UI Improvements
+📐 Improved Shape Selector — Easier and more visual selection
+🔘 Smoother controls and refined interactions
+
+⚡ Improvements
+🔔 Notification Enhancements
+🔋 Better overall stability and reliability
