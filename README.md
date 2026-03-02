@@ -96,8 +96,3 @@ If you find Coffee useful, please consider ⭐ starring the repository to help o
 ## 📄 License
 
 Coffee is licensed under the [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html).
-
----
-
-## 🙏 Inspiration
-Inspired by the OG [Coffee by @mueller-ma](https://github.com/mueller-ma/Coffee)
