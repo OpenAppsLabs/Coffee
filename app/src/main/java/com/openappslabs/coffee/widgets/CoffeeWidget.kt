@@ -55,11 +55,19 @@ import com.openappslabs.coffee.services.CoffeeService
 import com.openappslabs.coffee.services.CoffeeTileService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 val VARIANT_KEY = stringPreferencesKey("widget_variant")
 private val SHAPE_KEY = stringPreferencesKey("widget_shape")
+
+private val NothingRed = Color(0xFFD71921)
+private val BlackColor = Color(0xFF000000)
+private val DarkGray = Color(0xFF2C2C2C)
+private val NothingRedAndroid = android.graphics.Color.parseColor("#D71921")
+private val BlackAndroid = android.graphics.Color.BLACK
 
 abstract class BaseCoffeeWidget(
     private val activeContent: ColorProvider,
@@ -70,29 +78,31 @@ abstract class BaseCoffeeWidget(
 
     private val ndotFont = FontFamily("ndot")
     override val sizeMode: SizeMode = SizeMode.Exact
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val dataStore = CoffeeDataStore(context.applicationContext)
 
         provideContent {
-            val isActive by dataStore.observeIsActive().collectAsState(initial = false)
+            val coffeeState by dataStore.coffeeState.collectAsState(
+                initial = com.openappslabs.coffee.data.CoffeeState()
+            )
             val size = LocalSize.current
             val prefs = currentState<Preferences>()
             val shapeName = prefs[SHAPE_KEY] ?: "Circle"
             val variant = prefs[VARIANT_KEY] ?: "Normal"
-            val dynamicActiveHex = remember(variant) {
-                if (variant == "Nothing") Color(0xFFD71921) else Color(0xFF000000)
-            }
+
+            val dynamicActiveHex = if (variant == "Nothing") NothingRed else BlackColor
 
             GlanceTheme {
                 CoffeeWidgetContent(
-                    isActive = isActive,
+                    isActive = coffeeState.isActive,
                     size = size,
                     shapeName = shapeName,
                     variant = variant,
                     activeContent = activeContent,
                     inactiveContent = inactiveContent,
                     activeHex = dynamicActiveHex,
-                    inactiveHex = Color(0xFF2C2C2C)
+                    inactiveHex = DarkGray
                 )
             }
         }
@@ -218,16 +228,21 @@ private fun handleWidgetSettings(context: Context, intent: Intent, widget: Glanc
     val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
 
     if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        scope.launch {
+            try {
+                val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
 
-            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
-                prefs.toMutablePreferences().apply {
-                    this[SHAPE_KEY] = shapeName
-                    this[VARIANT_KEY] = variantName
+                updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
+                    prefs.toMutablePreferences().apply {
+                        this[SHAPE_KEY] = shapeName
+                        this[VARIANT_KEY] = variantName
+                    }
                 }
+                widget.update(context, glanceId)
+            } finally {
+                scope.cancel()
             }
-            widget.update(context, glanceId)
         }
     }
 }
@@ -235,15 +250,15 @@ private fun handleWidgetSettings(context: Context, intent: Intent, widget: Glanc
 class CoffeeWidget : BaseCoffeeWidget(
     activeContent = ColorProvider(R.color.coffee_active_content),
     inactiveContent = ColorProvider(R.color.coffee_inactive_content),
-    activeHex = Color(0xFF000000),
-    inactiveHex = Color(0xFF2C2C2C)
+    activeHex = BlackColor,
+    inactiveHex = DarkGray
 )
 
 class NothingCoffeeWidget : BaseCoffeeWidget(
     activeContent = ColorProvider(R.color.coffee_active_content),
     inactiveContent = ColorProvider(R.color.coffee_inactive_content),
-    activeHex = Color(0xFFD71921),
-    inactiveHex = Color(0xFF000000),
+    activeHex = NothingRed,
+    inactiveHex = BlackColor,
 )
 
 class CoffeeWidgetReceiver : GlanceAppWidgetReceiver() {
@@ -265,15 +280,14 @@ class NothingCoffeeWidgetReceiver : GlanceAppWidgetReceiver() {
 class ToggleCoffeeAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val dataStore = CoffeeDataStore(context.applicationContext)
-        val isActive = dataStore.observeIsActive().first()
-        val newState = !isActive
+        val coffeeState = dataStore.coffeeState.first()
+        val newState = !coffeeState.isActive
 
-        dataStore.setCoffeeActive(newState)
+        dataStore.setCoffeeStatus(newState)
 
         val intent = Intent(context, CoffeeService::class.java).apply {
             if (newState) {
-                val duration = dataStore.observeDuration().first()
-                putExtra(CoffeeService.EXTRA_DURATION_MINUTES, duration)
+                putExtra(CoffeeService.EXTRA_DURATION_MINUTES, coffeeState.duration)
             } else {
                 action = CoffeeService.ACTION_STOP
             }
@@ -293,11 +307,7 @@ fun createApiPreview(context: Context, shapeName: String, variant: String): Remo
     val density = displayMetrics.density
     val sizePx = (110 * density).toInt()
 
-    val bgColor = if (variant == "Nothing") {
-        android.graphics.Color.parseColor("#D71921")
-    } else {
-        android.graphics.Color.BLACK
-    }
+    val bgColor = if (variant == "Nothing") NothingRedAndroid else BlackAndroid
 
     val bitmap = WidgetShapeRenderer.createShapeBitmap(
         shapeName = shapeName,

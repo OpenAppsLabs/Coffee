@@ -1,6 +1,5 @@
 package com.openappslabs.coffee.ui.screens.homescreen
 
-import android.Manifest
 import android.app.Activity
 import android.app.PendingIntent
 import android.app.StatusBarManager
@@ -8,16 +7,11 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.service.quicksettings.TileService
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -51,7 +45,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -63,7 +56,6 @@ import com.openappslabs.coffee.R
 import com.openappslabs.coffee.data.CoffeeDataStore
 import com.openappslabs.coffee.services.CoffeeService
 import com.openappslabs.coffee.services.CoffeeTileService
-import com.openappslabs.coffee.ui.components.CoffeeAlertDialog
 import com.openappslabs.coffee.ui.components.CoffeeCard
 import com.openappslabs.coffee.ui.components.SplitButton
 import com.openappslabs.coffee.ui.components.WidgetSheet
@@ -72,6 +64,7 @@ import com.openappslabs.coffee.widgets.createApiPreview
 import kotlinx.coroutines.launch
 
 private val SHAPE_KEY = stringPreferencesKey("widget_shape")
+private val ActionButtonShape = RoundedCornerShape(16.dp)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,19 +78,10 @@ fun HomeScreen(
     val activity = context as? Activity
     val scope = rememberCoroutineScope()
     val dataStore = remember { CoffeeDataStore(context.applicationContext) }
-    var showSettingsDialog by remember { mutableStateOf(false) }
-    var hasAskedPermission by remember { mutableStateOf(false) }
     var selectedShapeName by remember { mutableStateOf("Circle") }
     var selectedVariant by remember { mutableStateOf(initialVariant) }
-    var showWidgetSheet by remember { 
-        mutableStateOf(openWidgetSheet || appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) 
-    }
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (!isGranted) {
-            Toast.makeText(context, "Notifications are needed for the timer status.", Toast.LENGTH_SHORT).show()
-        }
+    var showWidgetSheet by remember {
+        mutableStateOf(openWidgetSheet || appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID)
     }
 
     LaunchedEffect(appWidgetId) {
@@ -115,24 +99,6 @@ fun HomeScreen(
             } catch (e: Exception) {
             }
         }
-    }
-
-    if (showSettingsDialog) {
-        CoffeeAlertDialog(
-            onDismissRequest = { showSettingsDialog = false },
-            title = "Permission Required",
-            text = "Notification permission is required to show the timer. Please enable it in system settings.",
-            confirmButtonText = "Open Settings",
-            onConfirmClick = {
-                showSettingsDialog = false
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", context.packageName, null)
-                }
-                context.startActivity(intent)
-            },
-            dismissButtonText = "Cancel",
-            onDismissClick = { showSettingsDialog = false }
-        )
     }
 
     Scaffold(
@@ -168,29 +134,12 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             CoffeeCard(
-                title = "Stay Awake",
+                title = "Keep Your Screen Awake",
                 description = "Coffee keeps your display on without changing settings. Perfect for reading or following recipes."
             )
 
             SplitButton(
                 onToggle = { isActive, durationMinutes ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        val permission = Manifest.permission.POST_NOTIFICATIONS
-                        if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                            val shouldShowRationale = activity?.let {
-                                ActivityCompat.shouldShowRequestPermissionRationale(it, permission)
-                            } ?: false
-
-                            if (!shouldShowRationale && hasAskedPermission) {
-                                showSettingsDialog = true
-                            } else {
-                                hasAskedPermission = true
-                                permissionLauncher.launch(permission)
-                            }
-                            return@SplitButton false
-                        }
-                    }
-
                     scope.launch {
                         toggleCoffeeService(context, dataStore, isActive, durationMinutes)
                     }
@@ -274,7 +223,7 @@ private fun HomeScreenActionButton(text: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = ActionButtonShape,
         colors = ButtonDefaults.filledTonalButtonColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             contentColor = MaterialTheme.colorScheme.onSurface
@@ -322,7 +271,7 @@ private fun handleWidgetPinning(
 }
 
 private suspend fun toggleCoffeeService(context: Context, dataStore: CoffeeDataStore, isActive: Boolean, duration: Int) {
-    dataStore.setCoffeeActive(isActive)
+    dataStore.setCoffeeStatus(isActive)
 
     val intent = Intent(context, CoffeeService::class.java).apply {
         if (isActive) {

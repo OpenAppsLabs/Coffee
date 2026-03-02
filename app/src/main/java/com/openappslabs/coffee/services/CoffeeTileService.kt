@@ -10,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -18,7 +17,6 @@ class CoffeeTileService : TileService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private var observationJob: Job? = null
-
     private val dataStore by lazy { CoffeeDataStore(applicationContext) }
 
     override fun onStartListening() {
@@ -26,13 +24,8 @@ class CoffeeTileService : TileService() {
 
         observationJob?.cancel()
         observationJob = serviceScope.launch {
-            combine(
-                dataStore.observeIsActive(),
-                dataStore.observeDuration()
-            ) { isActive, duration ->
-                isActive to duration
-            }.collect { (isActive, duration) ->
-                updateTileState(isActive, duration)
+            dataStore.coffeeState.collect { state ->
+                updateTileState(state.isActive, state.duration)
             }
         }
     }
@@ -52,37 +45,37 @@ class CoffeeTileService : TileService() {
         super.onClick()
 
         serviceScope.launch {
-            val isCurrentlyActive = dataStore.observeIsActive().first()
-            val duration = dataStore.observeDuration().first()
-            val newState = !isCurrentlyActive
+            try {
+                val currentState = dataStore.coffeeState.first()
+                val newActive = !currentState.isActive
 
-            dataStore.setCoffeeActive(newState)
-
-            val serviceIntent = Intent(this@CoffeeTileService, CoffeeService::class.java).apply {
-                if (newState) {
-                    putExtra(CoffeeService.EXTRA_DURATION_MINUTES, duration)
-                } else {
-                    action = CoffeeService.ACTION_STOP
+                val serviceIntent = Intent(this@CoffeeTileService, CoffeeService::class.java).apply {
+                    if (newActive) {
+                        putExtra(CoffeeService.EXTRA_DURATION_MINUTES, currentState.duration)
+                    } else {
+                        action = CoffeeService.ACTION_STOP
+                    }
                 }
-            }
 
-            if (newState) {
-                ContextCompat.startForegroundService(this@CoffeeTileService, serviceIntent)
-            } else {
-                startService(serviceIntent)
+                if (newActive) {
+                    ContextCompat.startForegroundService(this@CoffeeTileService, serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
+            } catch (e: Exception) {
             }
         }
     }
 
     private fun updateTileState(isActive: Boolean, duration: Int) {
-        val tile = qsTile ?: return
-
-        tile.state = if (isActive) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-        tile.subtitle = when {
-            !isActive -> "Off"
-            duration == 0 -> "Infinite"
-            else -> "${duration}m"
+        qsTile?.apply {
+            state = if (isActive) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+            subtitle = when {
+                !isActive -> "Off"
+                duration == 0 -> "Infinite"
+                else -> "${duration}m"
+            }
+            updateTile()
         }
-        tile.updateTile()
     }
 }

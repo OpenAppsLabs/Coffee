@@ -25,7 +25,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.openappslabs.coffee.data.CoffeeDataStore
+
+private val DialogShape = RoundedCornerShape(32.dp)
+private val ButtonShape = RoundedCornerShape(16.dp)
+private val TIME_OPTIONS = listOf(5, 15, 30, 45, 60, 0)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -42,7 +45,7 @@ fun TimeSelectionDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
-            shape = RoundedCornerShape(32.dp),
+            shape = DialogShape,
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
             )
@@ -54,7 +57,7 @@ fun TimeSelectionDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Stay Awake",
+                    text = "Screen Timeout",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -69,9 +72,7 @@ fun TimeSelectionDialog(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     maxItemsInEachRow = 3
                 ) {
-                    val options = remember { CoffeeDataStore.TIME_OPTIONS }
-
-                    options.forEach { minutes ->
+                    TIME_OPTIONS.forEach { minutes ->
                         val isSelected = minutes == currentMinutes
                         val label = remember(minutes) {
                             if (minutes == 0) "∞" else "$minutes"
@@ -85,7 +86,7 @@ fun TimeSelectionDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(64.dp),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = ButtonShape,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isSelected)
                                     MaterialTheme.colorScheme.primary

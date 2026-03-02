@@ -9,38 +9,36 @@ import com.openappslabs.coffee.data.CoffeeDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED &&
+            intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
 
-        if (action == Intent.ACTION_BOOT_COMPLETED ||
-            action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+        val pendingResult = goAsync()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-            val pendingResult = goAsync()
+        scope.launch {
+            try {
+                val dataStore = CoffeeDataStore(context.applicationContext)
+                val isActive = dataStore.observeIsActive().first()
 
-            scope.launch {
-                try {
-                    val dataStore = CoffeeDataStore(context.applicationContext)
-                    val isActive = dataStore.observeIsActive().first()
-
-                    if (isActive) {
-                        dataStore.setCoffeeActive(false)
-                    }
-
-                    TileService.requestListeningState(
-                        context.applicationContext,
-                        ComponentName(context, CoffeeTileService::class.java)
-                    )
-                } catch (e: Exception) {
-                } finally {
-                    pendingResult.finish()
+                if (isActive) {
+                    dataStore.setCoffeeStatus(false)
                 }
+
+                TileService.requestListeningState(
+                    context.applicationContext,
+                    ComponentName(context, CoffeeTileService::class.java)
+                )
+            } catch (e: Exception) {
+            } finally {
+                scope.cancel()
+                pendingResult.finish()
             }
         }
     }

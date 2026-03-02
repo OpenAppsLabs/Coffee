@@ -17,7 +17,6 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.service.quicksettings.TileService
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.glance.appwidget.updateAll
 import com.openappslabs.coffee.R
@@ -26,7 +25,6 @@ import com.openappslabs.coffee.widgets.CoffeeWidget
 import com.openappslabs.coffee.widgets.NothingCoffeeWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
@@ -45,6 +43,7 @@ class CoffeeService : Service() {
     }
     private lateinit var notificationBuilder: NotificationCompat.Builder
     private var endTimeMillis: Long = 0
+
     private val timerRunnable = object : Runnable {
         override fun run() {
             val remainingMillis = endTimeMillis - System.currentTimeMillis()
@@ -58,10 +57,11 @@ class CoffeeService : Service() {
             val minutes = totalSeconds / 60
             val seconds = totalSeconds % 60
             val timeString = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
-            val notification = buildNotification("Remaining time: $timeString")
+
+            val notification = buildNotification("Time remaining $timeString")
             notificationManager.notify(NOTIFICATION_ID, notification)
 
-            if (totalSeconds % 30 == 0L) {
+            if (totalSeconds % 60 == 0L) {
                 serviceScope.launch { updateAllWidgets() }
             }
 
@@ -73,10 +73,10 @@ class CoffeeService : Service() {
         private const val CHANNEL_ID = "coffee_service_channel"
         private const val NOTIFICATION_ID = 1
         private const val REQ_STOP = 1
-        private const val REQ_NEXT = 2
+        private const val REQ_EXTEND = 2
 
         const val ACTION_STOP = "com.openappslabs.coffee.ACTION_STOP"
-        const val ACTION_NEXT_TIMEOUT = "com.openappslabs.coffee.ACTION_NEXT_TIMEOUT"
+        const val ACTION_EXTEND = "com.openappslabs.coffee.ACTION_EXTEND"
         const val EXTRA_DURATION_MINUTES = "DURATION_MINUTES"
 
         @Volatile
@@ -84,7 +84,6 @@ class CoffeeService : Service() {
             private set
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate() {
         super.onCreate()
         isRunning = true
@@ -97,13 +96,21 @@ class CoffeeService : Service() {
             "Coffee::ScreenAwakeLock"
         ).apply { setReferenceCounted(false) }
 
-        registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF), RECEIVER_NOT_EXPORTED)
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_USER_PRESENT)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenStateReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(screenStateReceiver, filter)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> stopCoffee()
-            ACTION_NEXT_TIMEOUT -> handleNextTimeout()
+            ACTION_EXTEND -> handleExtend()
             else -> {
                 val durationMinutes = intent?.getIntExtra(EXTRA_DURATION_MINUTES, -1)
                     ?.takeIf { it != -1 }
@@ -121,16 +128,19 @@ class CoffeeService : Service() {
         return START_STICKY
     }
 
-    private fun handleNextTimeout() {
+    private fun handleExtend() {
         serviceScope.launch {
-            val options = CoffeeDataStore.TIME_OPTIONS
-            val currentDuration = dataStore.observeDuration().first()
-            val currentIndex = options.indexOf(currentDuration)
-            val nextIndex = (currentIndex + 1) % options.size
-            val nextDuration = options[nextIndex]
+            if (endTimeMillis == 0L) return@launch
 
-            dataStore.setSelectedDuration(nextDuration)
-            startCoffee(nextDuration)
+            val extendMillis = dataStore.observeDuration().first() * 60_000L
+            endTimeMillis = endTimeMillis.coerceAtLeast(System.currentTimeMillis()) + extendMillis
+
+            dataStore.setCoffeeStatus(active = true, endTime = endTimeMillis)
+
+            handler.removeCallbacks(timerRunnable)
+            handler.post(timerRunnable)
+
+            updateTileAndWidgets()
         }
     }
 
@@ -139,14 +149,14 @@ class CoffeeService : Service() {
         val endTime = if (durationMinutes > 0) startTime + (durationMinutes * 60 * 1000L) else 0L
 
         serviceScope.launch {
-            dataStore.setCoffeeStatus(active = true, startTime = startTime, endTime = endTime)
+            dataStore.setCoffeeStatus(active = true, endTime = endTime)
             updateTileAndWidgets()
         }
 
         val initialText = if (durationMinutes == 0) {
             "Active indefinitely"
         } else {
-            String.format(Locale.getDefault(), "Remaining time: %d:00", durationMinutes)
+            String.format(Locale.getDefault(), "Time remaining %02d:00", durationMinutes)
         }
 
         val notification = buildNotification(initialText)
@@ -167,7 +177,7 @@ class CoffeeService : Service() {
 
     private fun stopCoffee() {
         serviceScope.launch {
-            dataStore.setCoffeeActive(false)
+            dataStore.setCoffeeStatus(false)
             updateTileAndWidgets()
             stopSelf()
         }
@@ -194,42 +204,46 @@ class CoffeeService : Service() {
         val stopIntent = PendingIntent.getService(this, REQ_STOP,
             Intent(this, CoffeeService::class.java).apply { action = ACTION_STOP }, flags)
 
-        val nextIntent = PendingIntent.getService(this, REQ_NEXT,
-            Intent(this, CoffeeService::class.java).apply { action = ACTION_NEXT_TIMEOUT }, flags)
+        val extendIntent = PendingIntent.getService(this, REQ_EXTEND,
+            Intent(this, CoffeeService::class.java).apply { action = ACTION_EXTEND }, flags)
 
         notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Coffee is Active")
             .setSmallIcon(R.drawable.app_icon)
-            .setOngoing(true)
             .setSilent(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
-            .addAction(0, "Next timeout", nextIntent)
+            .addAction(0, "Extend Time", extendIntent)
             .addAction(0, "Stop", stopIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
     }
 
     private fun buildNotification(contentText: String): Notification {
-        return notificationBuilder.setContentText(contentText).build()
+        return notificationBuilder
+            .setContentText(contentText)
+            .setOngoing(true)
+            .build()
     }
 
     override fun onDestroy() {
         isRunning = false
-        handler.removeCallbacks(timerRunnable)
+        serviceScope.cancel()
+        handler.removeCallbacksAndMessages(null)
 
-        if (wakeLock?.isHeld == true) {
-            try { wakeLock?.release() } catch (ignored: Exception) {}
+        wakeLock?.let {
+            if (it.isHeld) {
+                try { it.release() } catch (ignored: Exception) {}
+            }
         }
 
         serviceScope.launch(Dispatchers.IO) {
-            dataStore.setCoffeeActive(false)
+            dataStore.setCoffeeStatus(false)
             updateAllWidgets()
         }
 
-        try { unregisterReceiver(screenOffReceiver) } catch (e: Exception) {}
+        try { unregisterReceiver(screenStateReceiver) } catch (ignored: Exception) {}
 
-        handler.postDelayed({ serviceScope.cancel() }, 500)
         super.onDestroy()
     }
 
@@ -242,7 +256,10 @@ class CoffeeService : Service() {
 
     private fun updateTileAndWidgets() {
         try {
-            TileService.requestListeningState(applicationContext, ComponentName(this, CoffeeTileService::class.java))
+            TileService.requestListeningState(
+                applicationContext,
+                ComponentName(this, CoffeeTileService::class.java)
+            )
         } catch (ignored: Exception) {}
 
         serviceScope.launch { updateAllWidgets() }
@@ -251,7 +268,11 @@ class CoffeeService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, "Coffee Service", NotificationManager.IMPORTANCE_LOW).apply {
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Coffee Service",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
             description = "Keeps the screen awake"
             setShowBadge(false)
             enableLights(false)
@@ -260,9 +281,11 @@ class CoffeeService : Service() {
         notificationManager.createNotificationChannel(channel)
     }
 
-    private val screenOffReceiver = object : BroadcastReceiver() {
+    private val screenStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_SCREEN_OFF) stopCoffee()
+            when (intent.action) {
+                Intent.ACTION_SCREEN_OFF -> stopCoffee()
+            }
         }
     }
 }
