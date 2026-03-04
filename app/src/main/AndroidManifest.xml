@@ -26,8 +26,13 @@
             android:theme="@style/Theme.Coffee">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
             </intent-filter>
         </activity>
 
@@ -50,7 +55,7 @@
             android:foregroundServiceType="specialUse"
             android:exported="false">
             <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_TYPE_DESCRIPTION"
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Keeping the screen awake for user-defined durations while reading or following tasks." />
         </service>
 
