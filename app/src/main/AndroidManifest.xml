@@ -50,7 +50,7 @@
             android:foregroundServiceType="specialUse"
             android:exported="false">
             <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_TYPE_DESCRIPTION"
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Keeping the screen awake for user-defined durations while reading or following tasks." />
         </service>
 
