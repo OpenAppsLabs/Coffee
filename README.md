@@ -14,7 +14,8 @@
 
 **Keep Screen Awake**
 
-Coffee is a modern, open-source Android utility built with Jetpack Compose and Material Design 3. It provides a Quick Settings tile to prevent screen dimming or locking during reading, navigation, or focused tasks, with customizable timers including indefinite mode.
+Coffee keeps your screen awake whenever you need it.Use the Quick Settings tile to prevent dimming or locking during reading, navigation, or focused tasks.
+Set a timer or keep it on indefinitely — simple, fast, and beautifully integrated with your system theme.
 
 > **Disclaimer:** Uses foreground service with WAKE_LOCK for reliable operation. Works on Android 10+. Test compatibility on your device.
 
@@ -40,7 +41,7 @@ Get the latest version of **Coffee**:
   </a>
 </p>
 
-> ⚠️ This app is not available on the Google Play Store — use the links above to download the APK.
+> ⚠️ Coffee is currently not available on the Google Play Store. Please use the links above to download.
 
 ---
 
@@ -58,22 +59,13 @@ Get the latest version of **Coffee**:
 
 ## ✨ Features
 
-* **Material You Design:** Fully compatible with Material 3 dynamic theming.  
-* **Quick Settings Tile:** One-tap toggle with timer selection (1-60 min or infinite).  
-* **Foreground Service:** Reliable screen-on with persistent notification.  
-* **Lightweight:** Minimal footprint, instant response.  
-* **No Ads/Trackers:** 100% privacy-focused, offline operation.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-
-- Fork the repo and create a branch  
-- Keep changes small and focused  
-- Test before submitting  
-- Open a PR to `master`  
+* **Material You Design:** Beautiful dynamic colors that match your system theme.
+* **No Ads or Trackers:** 100% private and fully offline.
+* **Home Screen Widgets:** Customizable widgets with 20+ expressive shapes, multiple styles, and smooth animations.
+* **Quick Settings Tile:** One-tap toggle with timer options (1–60 min or infinite).
+* **Persistent Notification:** Keeps your screen on reliably while the timer is active.
+* **Extend Session:** Add more time without restarting.
+* **Lightweight:** Fast, simple, and minimal.
 
 ---
 
@@ -85,9 +77,9 @@ When reporting a bug, please include:
 
 - Steps to reproduce the issue
 - Device/Android version
-- Screenshots (if applicable)
+- Screenshots
 
-This helps me fix problems faster and improve the app for everyone. I welcome all constructive feedback and suggestions.
+This helps me fix problems faster and improve the app for everyone.
 
 If you find Coffee useful, please consider ⭐ starring the repository to help others discover it.
 
