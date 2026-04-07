@@ -137,6 +137,9 @@ class CoffeeService : Service() {
 
             dataStore.setCoffeeStatus(active = true, endTime = endTimeMillis)
 
+            val remainingMinutes = ((endTimeMillis - System.currentTimeMillis()) / 60_000L).toInt()
+            manageWakeLock(remainingMinutes)
+
             handler.removeCallbacks(timerRunnable)
             handler.post(timerRunnable)
 
@@ -147,6 +150,8 @@ class CoffeeService : Service() {
     private fun startCoffee(durationMinutes: Int) {
         val startTime = System.currentTimeMillis()
         val endTime = if (durationMinutes > 0) startTime + (durationMinutes * 60 * 1000L) else 0L
+
+        endTimeMillis = endTime
 
         serviceScope.launch {
             dataStore.setCoffeeStatus(active = true, endTime = endTime)
@@ -170,7 +175,6 @@ class CoffeeService : Service() {
 
         handler.removeCallbacks(timerRunnable)
         if (durationMinutes > 0) {
-            endTimeMillis = endTime
             handler.post(timerRunnable)
         }
     }
@@ -190,7 +194,8 @@ class CoffeeService : Service() {
             } catch (ignored: Exception) {}
 
             val timeout = if (durationMinutes > 0) {
-                (durationMinutes * 60 * 1000L) + 2000L
+                val remainingMillis = endTimeMillis - System.currentTimeMillis()
+                remainingMillis.coerceAtLeast(0L) + 2000L
             } else {
                 12 * 60 * 60 * 1000L
             }
@@ -204,22 +209,30 @@ class CoffeeService : Service() {
         val stopIntent = PendingIntent.getService(this, REQ_STOP,
             Intent(this, CoffeeService::class.java).apply { action = ACTION_STOP }, flags)
 
-        val extendIntent = PendingIntent.getService(this, REQ_EXTEND,
-            Intent(this, CoffeeService::class.java).apply { action = ACTION_EXTEND }, flags)
-
         notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Coffee is Active")
             .setSmallIcon(R.drawable.app_icon)
             .setSilent(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
-            .addAction(0, "Extend Time", extendIntent)
             .addAction(0, "Stop", stopIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
     }
 
     private fun buildNotification(contentText: String): Notification {
+        notificationBuilder.clearActions()
+
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        val stopIntent = PendingIntent.getService(this, REQ_STOP,
+            Intent(this, CoffeeService::class.java).apply { action = ACTION_STOP }, flags)
+        notificationBuilder.addAction(0, "Stop", stopIntent)
+        if (endTimeMillis > 0) {
+            val extendIntent = PendingIntent.getService(this, REQ_EXTEND,
+                Intent(this, CoffeeService::class.java).apply { action = ACTION_EXTEND }, flags)
+            notificationBuilder.addAction(0, "Extend Time", extendIntent)
+        }
+
         return notificationBuilder
             .setContentText(contentText)
             .setOngoing(true)
