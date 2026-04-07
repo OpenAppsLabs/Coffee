@@ -137,6 +137,9 @@ class CoffeeService : Service() {
 
             dataStore.setCoffeeStatus(active = true, endTime = endTimeMillis)
 
+            val remainingMinutes = ((endTimeMillis - System.currentTimeMillis()) / 60_000L).toInt()
+            manageWakeLock(remainingMinutes)
+
             handler.removeCallbacks(timerRunnable)
             handler.post(timerRunnable)
 
@@ -191,7 +194,8 @@ class CoffeeService : Service() {
             } catch (ignored: Exception) {}
 
             val timeout = if (durationMinutes > 0) {
-                (durationMinutes * 60 * 1000L) + 2000L
+                val remainingMillis = endTimeMillis - System.currentTimeMillis()
+                remainingMillis.coerceAtLeast(0L) + 2000L
             } else {
                 12 * 60 * 60 * 1000L
             }
