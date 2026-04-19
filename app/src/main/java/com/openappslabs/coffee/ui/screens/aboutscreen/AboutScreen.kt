@@ -100,7 +100,6 @@ fun AboutScreen(
         ) {
             AboutMeCard()
 
-            // App Info Section
             CardSection {
                 InfoRow(
                     label = "APP",
@@ -119,7 +118,6 @@ fun AboutScreen(
                 )
             }
 
-            // Legal & Developer Section
             CardSection {
                 InfoRow(
                     label = "ORGANIZATION",
@@ -136,7 +134,6 @@ fun AboutScreen(
                 )
             }
 
-            // Support & Source Section
             CardSection {
                 InfoRow(
                     label = "SUPPORT",
