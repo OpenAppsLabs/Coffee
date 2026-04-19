@@ -35,7 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.openappslabs.coffee.ui.theme.WidgetExpressiveLibrary
 
-private val CardShape = RoundedCornerShape(28.dp)
+private val CardShape = RoundedCornerShape(16.dp)
 private val ItemShape = RoundedCornerShape(16.dp)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

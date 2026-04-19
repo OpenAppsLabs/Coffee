@@ -50,8 +50,8 @@ import com.openappslabs.coffee.ui.theme.WidgetExpressiveLibrary
 import com.openappslabs.coffee.ui.theme.ndotFamily
 import kotlinx.coroutines.launch
 
-private val CardShape = RoundedCornerShape(24.dp)
-private val ButtonLargeShape = RoundedCornerShape(28.dp)
+private val CardShape = RoundedCornerShape(16.dp)
+private val ButtonLargeShape = RoundedCornerShape(16.dp)
 private val ButtonSmallShape = RoundedCornerShape(16.dp)
 private val ColorAnimationSpec = tween<Color>(durationMillis = 250)
 private val MorphAnimationSpec = tween<Float>(durationMillis = 250)

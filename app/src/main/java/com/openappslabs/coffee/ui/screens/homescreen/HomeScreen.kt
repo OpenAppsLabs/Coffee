@@ -13,14 +13,17 @@ import android.os.Bundle
 import android.service.quicksettings.TileService
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -30,6 +33,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -45,6 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -108,18 +113,29 @@ fun HomeScreen(
                     Text(
                         text = "Coffee",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Light
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 24.sp,
+                        letterSpacing = (-0.5).sp
                     )
                 },
                 actions = {
-                    FilledTonalIconButton(onClick = onAboutClick) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.info),
-                            contentDescription = "About",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Surface(
+                        onClick = onAboutClick,
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        modifier = Modifier
+                            .padding(start = 12.dp, end = 12.dp)
+                            .size(48.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.info),
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
                 }
             )
         }

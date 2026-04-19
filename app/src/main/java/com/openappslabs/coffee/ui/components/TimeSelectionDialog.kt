@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-private val DialogShape = RoundedCornerShape(32.dp)
+private val DialogShape = RoundedCornerShape(16.dp)
 private val ButtonShape = RoundedCornerShape(16.dp)
 private val TIME_OPTIONS = listOf(5, 15, 30, 45, 60, 0)
 
