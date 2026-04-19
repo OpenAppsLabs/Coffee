@@ -53,7 +53,11 @@ fun AppNavGraph(
     if (startDestination != null) {
         NavHost(
             navController = navController,
-            startDestination = startDestination!!
+            startDestination = startDestination!!,
+            enterTransition = Navimation.enterTransition,
+            exitTransition = Navimation.exitTransition,
+            popEnterTransition = Navimation.popEnterTransition,
+            popExitTransition = Navimation.popExitTransition
         ) {
 
             composable<Screen.Onboarding> {

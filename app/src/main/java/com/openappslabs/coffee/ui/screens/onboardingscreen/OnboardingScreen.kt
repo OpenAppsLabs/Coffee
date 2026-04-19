@@ -51,8 +51,8 @@ import com.openappslabs.coffee.ui.components.CoffeeAlertDialog
 import com.openappslabs.coffee.utils.rememberPermissionHandler
 import kotlinx.coroutines.launch
 
-private val IconShape = RoundedCornerShape(32.dp)
-private val CardShape = RoundedCornerShape(28.dp)
+private val IconShape = RoundedCornerShape(16.dp)
+private val CardShape = RoundedCornerShape(16.dp)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
