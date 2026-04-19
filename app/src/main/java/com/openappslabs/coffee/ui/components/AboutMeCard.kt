@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openappslabs.coffee.R
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -23,7 +25,9 @@ fun AboutMeCard() {
     val pfpShape = MaterialShapes.Cookie9Sided.toShape()
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(0.dp),
         colors = CardDefaults.cardColors(
@@ -31,34 +35,45 @@ fun AboutMeCard() {
         )
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.pfp),
-                contentDescription = null,
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.pfp),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(pfpShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Column(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(pfpShape),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
+                    .weight(1f)
+                    .fillMaxHeight(),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
                     text = role,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    ),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                     letterSpacing = 1.5.sp
                 )
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = name,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    ),
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface,
                     letterSpacing = (-0.5).sp
