@@ -47,7 +47,13 @@ fun AppNavGraph(
     }
 
     val onBackClick = remember(navController) {
-        { navController.popBackStack(); Unit }
+        {
+            val currentState = navController.currentBackStackEntry?.lifecycle?.currentState
+            if (currentState?.isAtLeast(Lifecycle.State.RESUMED) == true) {
+                navController.popBackStack()
+            }
+            Unit
+        }
     }
 
     if (startDestination != null) {

@@ -130,7 +130,7 @@ fun HomeScreen(
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 painter = painterResource(id = R.drawable.info),
-                                contentDescription = "Back",
+                                contentDescription = "About",
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(24.dp)
                             )

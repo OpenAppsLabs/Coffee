@@ -12,7 +12,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.navigation.NavBackStackEntry
 
 object Navimation {
-    private const val DURATION = 500
+    private const val DURATION = 250
 
     val enterTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
         slideInHorizontally(
@@ -22,17 +22,23 @@ object Navimation {
     }
 
     val exitTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-        fadeOut(animationSpec = tween(DURATION))
+        slideOutHorizontally(
+            targetOffsetX = { -it / 4 },
+            animationSpec = tween(DURATION, easing = FastOutSlowInEasing)
+        ) + fadeOut(animationSpec = tween(DURATION))
     }
 
     val popEnterTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
         slideInHorizontally(
-            initialOffsetX = { -it },
+            initialOffsetX = { -it / 4 },
             animationSpec = tween(DURATION, easing = FastOutSlowInEasing)
         ) + fadeIn(animationSpec = tween(DURATION))
     }
 
     val popExitTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-        fadeOut(animationSpec = tween(DURATION))
+        slideOutHorizontally(
+            targetOffsetX = { it },
+            animationSpec = tween(DURATION, easing = FastOutSlowInEasing)
+        ) + fadeOut(animationSpec = tween(DURATION))
     }
 }
