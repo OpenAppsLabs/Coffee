@@ -1,0 +1,6 @@
+Coffee 1.3.0
+
+Changes
+- Fixed extend not working
+- New about section
+- Minor UI UX tweaks throughout the app
