@@ -15,10 +15,4 @@
     <color name="coffee_active_content">#FFFFFF</color>
     <color name="coffee_inactive_content">#9E9E9E</color>
 
-    <!-- Nothing Coffee Colors -->
-    <color name="nothing_active_bg">#D71921</color>
-    <color name="nothing_inactive_bg">#1B1B1D</color>
-    <color name="nothing_active_content">#FFFFFF</color>
-    <color name="nothing_inactive_content">#9E9E9E</color>
-
 </resources>

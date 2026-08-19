@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import android.os.Build
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -47,15 +48,13 @@ import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.toPath
 import com.openappslabs.coffee.R
 import com.openappslabs.coffee.ui.theme.WidgetExpressiveLibrary
-import com.openappslabs.coffee.ui.theme.ndotFamily
 import kotlinx.coroutines.launch
 
 private val CardShape = RoundedCornerShape(16.dp)
 private val ButtonLargeShape = RoundedCornerShape(16.dp)
 private val ButtonSmallShape = RoundedCornerShape(16.dp)
-private val ColorAnimationSpec = tween<Color>(durationMillis = 250)
-private val MorphAnimationSpec = tween<Float>(durationMillis = 250)
-private val NothingRed = Color(0xFFD71921)
+private val ColorAnimationSpec = tween<Color>(durationMillis = 400)
+private val MorphAnimationSpec = tween<Float>(durationMillis = 400)
 private val BlackColor = Color(0xFF000000)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,29 +72,39 @@ fun WidgetSheet(
     val scope = rememberCoroutineScope()
     val rawPolygons = remember { WidgetExpressiveLibrary.getRawPolygons() }
 
+    val initialSafeVariant = remember(initialVariant) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || initialVariant == "Normal") "Default" else initialVariant
+    }
+
     var selectedShapeName by remember { mutableStateOf(initialShape) }
-    var selectedVariant by remember { mutableStateOf(initialVariant) }
+    var selectedVariant by remember { mutableStateOf(initialSafeVariant) }
     var morph by remember {
         mutableStateOf(Morph(start = rawPolygons[initialShape]!!, end = rawPolygons[initialShape]!!))
     }
     val morphProgress = remember { Animatable(1f) }
 
-    LaunchedEffect(initialShape, initialVariant) {
+    LaunchedEffect(initialShape, initialSafeVariant) {
         selectedShapeName = initialShape
-        selectedVariant = initialVariant
+        selectedVariant = initialSafeVariant
         morph = Morph(rawPolygons[initialShape]!!, rawPolygons[initialShape]!!)
         morphProgress.snapTo(1f)
     }
 
-    val animatedColor by animateColorAsState(
-        targetValue = if (selectedVariant == "Nothing") NothingRed else BlackColor,
-        label = "Widget Color Animation",
-        animationSpec = ColorAnimationSpec
-    )
-
     val animatedShape = remember(morph, morphProgress.value) {
         MorphShape(morph, morphProgress.value)
     }
+
+    val animatedColor by animateColorAsState(
+        targetValue = if (selectedVariant == "Material") MaterialTheme.colorScheme.primary else BlackColor,
+        label = "ColorAnimation",
+        animationSpec = ColorAnimationSpec
+    )
+
+    val animatedIconColor by animateColorAsState(
+        targetValue = if (selectedVariant == "Material") MaterialTheme.colorScheme.onPrimary else Color.White,
+        label = "IconColorAnimation",
+        animationSpec = ColorAnimationSpec
+    )
 
     val surfaceVariantDimmed = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
 
@@ -187,77 +196,76 @@ fun WidgetSheet(
                             Icon(
                                 painter = painterResource(id = R.drawable.app_icon),
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = animatedIconColor,
                                 modifier = Modifier.size(32.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    shape = CardShape
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        ),
+                        shape = CardShape
                     ) {
-                        Text(
-                            text = "Variant",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
                         ) {
-                            FilledTonalButton(
-                                onClick = { selectedVariant = "Normal" },
-                                modifier = Modifier.weight(1f),
-                                shape = ButtonSmallShape,
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = if (selectedVariant == "Normal")
-                                        MaterialTheme.colorScheme.primaryContainer
-                                    else
-                                        surfaceVariantDimmed,
-                                    contentColor = if (selectedVariant == "Normal")
-                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                    else
-                                        MaterialTheme.colorScheme.onSurface
-                                )
-                            ) {
-                                Text("NORMAL")
-                            }
+                            Text(
+                                text = "Theme",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
 
-                            FilledTonalButton(
-                                onClick = { selectedVariant = "Nothing" },
-                                modifier = Modifier.weight(1f),
-                                shape = ButtonSmallShape,
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = if (selectedVariant == "Nothing")
-                                        NothingRed
-                                    else
-                                        surfaceVariantDimmed,
-                                    contentColor = if (selectedVariant == "Nothing")
-                                        Color.White
-                                    else
-                                        MaterialTheme.colorScheme.onSurface
-                                )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text(
-                                    text = "NOTHING",
-                                    fontFamily = ndotFamily
-                                )
+                                FilledTonalButton(
+                                    onClick = { selectedVariant = "Default" },
+                                    modifier = Modifier.weight(1f),
+                                    shape = ButtonSmallShape,
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = if (selectedVariant == "Default")
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        else
+                                            surfaceVariantDimmed,
+                                        contentColor = if (selectedVariant == "Default")
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                ) {
+                                    Text("DEFAULT")
+                                }
+
+                                FilledTonalButton(
+                                    onClick = { selectedVariant = "Material" },
+                                    modifier = Modifier.weight(1f),
+                                    shape = ButtonSmallShape,
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = if (selectedVariant == "Material")
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        else
+                                            surfaceVariantDimmed,
+                                        contentColor = if (selectedVariant == "Material")
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                ) {
+                                    Text("MATERIAL")
+                                }
                             }
                         }
                     }

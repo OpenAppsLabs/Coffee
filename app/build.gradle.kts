@@ -4,16 +4,15 @@ import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "com.openappslabs.coffee"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 37
 
     signingConfigs {
         create("release") {
@@ -35,7 +34,7 @@ android {
     defaultConfig {
         applicationId = "com.openappslabs.coffee"
         minSdk = 29
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 5
         versionName = "1.4.0"
 
@@ -58,8 +57,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     buildFeatures {
@@ -75,7 +74,7 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
@@ -109,6 +108,18 @@ dependencies {
     // Datastore
     implementation(libs.androidx.datastore.preferences)
 
+    // Icons
+    implementation(libs.androidx.compose.material.icons.extended)
+
     // Shapes (For Widgets)
     implementation(libs.androidx.graphics.shapes)
+
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 }

@@ -1,20 +1,20 @@
 package com.openappslabs.coffee.services
 
 import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.service.quicksettings.TileService
-import com.openappslabs.coffee.data.CoffeeDataStore
+import com.openappslabs.coffee.repository.CoffeeRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class BootReceiver : BroadcastReceiver() {
-
+    @Inject lateinit var coffeeRepository: CoffeeRepository
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED &&
             intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
@@ -24,17 +24,8 @@ class BootReceiver : BroadcastReceiver() {
 
         scope.launch {
             try {
-                val dataStore = CoffeeDataStore(context.applicationContext)
-                val isActive = dataStore.observeIsActive().first()
-
-                if (isActive) {
-                    dataStore.setCoffeeStatus(false)
-                }
-
-                TileService.requestListeningState(
-                    context.applicationContext,
-                    ComponentName(context, CoffeeTileService::class.java)
-                )
+                coffeeRepository.updateStatus(false)
+                coffeeRepository.requestTileUpdate()
             } catch (e: Exception) {
             } finally {
                 scope.cancel()

@@ -13,29 +13,15 @@ import android.os.Bundle
 import android.service.quicksettings.TileService
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,31 +31,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.openappslabs.coffee.R
-import com.openappslabs.coffee.data.CoffeeDataStore
-import com.openappslabs.coffee.services.CoffeeService
 import com.openappslabs.coffee.services.CoffeeTileService
 import com.openappslabs.coffee.ui.components.AlternateMode
-import com.openappslabs.coffee.ui.components.CoffeeCard
-import com.openappslabs.coffee.ui.components.SplitButton
+import com.openappslabs.coffee.ui.components.Header
+import com.openappslabs.coffee.ui.components.HomeActionButton
+import com.openappslabs.coffee.ui.components.TimeToggleButton
 import com.openappslabs.coffee.ui.components.WidgetSheet
+import com.openappslabs.coffee.utils.Constants
 import com.openappslabs.coffee.utils.rememberPermissionHandler
 import com.openappslabs.coffee.widgets.VARIANT_KEY
 import com.openappslabs.coffee.widgets.createApiPreview
 import kotlinx.coroutines.launch
 
-private val SHAPE_KEY = stringPreferencesKey("widget_shape")
-private val ActionButtonShape = RoundedCornerShape(16.dp)
+private val SHAPE_KEY = stringPreferencesKey(Constants.Widget.KEY_SHAPE)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,25 +61,23 @@ fun HomeScreen(
     onAboutClick: () -> Unit = {},
     appWidgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID,
     openWidgetSheet: Boolean = false,
-    initialVariant: String = "Normal"
+    viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val activity = context as? Activity
+    val activity = remember(context) { context as? Activity }
     val scope = rememberCoroutineScope()
-    val dataStore = remember { CoffeeDataStore(context.applicationContext) }
-    val coffeeActive by dataStore.observeIsActive().collectAsState(initial = false)
-    val alternateModeEnabled by dataStore.alternateMode.collectAsState(initial = false)
+    val coffeeState by viewModel.coffeeState.collectAsStateWithLifecycle()
     val permissionHandler = rememberPermissionHandler()
 
     var selectedShapeName by remember { mutableStateOf("Circle") }
-    var selectedVariant by remember { mutableStateOf(initialVariant) }
+    var selectedVariant by remember { mutableStateOf("Default") }
     var showWidgetSheet by remember {
         mutableStateOf(openWidgetSheet || appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID)
     }
 
     LaunchedEffect(permissionHandler.isWriteSettingsGranted) {
-        if (!permissionHandler.isWriteSettingsGranted && alternateModeEnabled) {
-            dataStore.setAlternateMode(false)
+        if (!permissionHandler.isWriteSettingsGranted && coffeeState.isAlternateMode) {
+            viewModel.setAlternateMode(false)
         }
     }
 
@@ -109,44 +91,59 @@ fun HomeScreen(
                     selectedShapeName = prefs[SHAPE_KEY] ?: "Circle"
                 }
                 if (prefs.contains(VARIANT_KEY)) {
-                    selectedVariant = prefs[VARIANT_KEY] ?: "Normal"
+                    selectedVariant = prefs[VARIANT_KEY] ?: "Default"
                 }
             } catch (e: Exception) {
             }
         }
     }
 
+    val onToggle = remember(viewModel) { viewModel::toggleCoffee }
+    val onDurationSelected = remember(viewModel) { viewModel::setSelectedDuration }
+    val onAddTileClick = remember(context) {
+        {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val statusBarManager = context.getSystemService(StatusBarManager::class.java)
+                statusBarManager?.requestAddTileService(
+                    ComponentName(context, CoffeeTileService::class.java),
+                    "Coffee",
+                    Icon.createWithResource(context, R.drawable.app_icon),
+                    { it.run() },
+                    {}
+                )
+            } else {
+                Toast.makeText(context, "Add tile manually via status bar", Toast.LENGTH_SHORT).show()
+            }
+            Unit
+        }
+    }
+    val onAddWidgetClick = remember {
+        {
+            selectedShapeName = "Circle"
+            showWidgetSheet = true
+        }
+    }
+    val onAlternateModeChange = remember(viewModel, permissionHandler) {
+        { enabled: Boolean ->
+            if (enabled) {
+                if (permissionHandler.isWriteSettingsGranted) {
+                    viewModel.setAlternateMode(true)
+                } else {
+                    permissionHandler.requestWriteSettingsPermission()
+                }
+            } else {
+                viewModel.setAlternateMode(false)
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Coffee",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 24.sp,
-                        letterSpacing = (-0.5).sp
-                    )
-                },
-                actions = {
-                    Surface(
-                        onClick = onAboutClick,
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                        modifier = Modifier
-                            .padding(start = 12.dp, end = 12.dp)
-                            .size(48.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.info),
-                                contentDescription = "About",
-                                tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-                }
+            Header(
+                title = "Coffee",
+                actionIcon = painterResource(id = R.drawable.info),
+                onActionClick = onAboutClick,
+                actionContentDescription = "About"
             )
         }
     ) { innerPadding ->
@@ -154,68 +151,31 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp, top = 8.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            CoffeeCard(
-                title = "Keep Your Screen Awake",
-                description = "Coffee keeps your display on without changing settings. Perfect for reading or following recipes."
+            TimeToggleButton(
+                coffeeState = coffeeState,
+                onToggle = onToggle,
+                onDurationSelected = onDurationSelected
             )
 
-            SplitButton(
-                onToggle = { isActive, durationMinutes ->
-                    scope.launch {
-                        toggleCoffeeService(context, dataStore, isActive, durationMinutes)
-                    }
-                    true
-                }
-            )
-
-            HomeScreenActionButton(
+            HomeActionButton(
                 text = "Add Quick Settings Tile",
-                onClick = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        val statusBarManager = context.getSystemService(StatusBarManager::class.java)
-                        statusBarManager?.requestAddTileService(
-                            ComponentName(context, CoffeeTileService::class.java),
-                            "Coffee",
-                            Icon.createWithResource(context, R.drawable.app_icon),
-                            { it.run() },
-                            {}
-                        )
-                    } else {
-                        Toast.makeText(context, "Add tile manually via status bar", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                onClick = onAddTileClick
             )
 
-            HomeScreenActionButton(
+            HomeActionButton(
                 text = "Add Widget to Home",
-                onClick = {
-                    selectedShapeName = "Circle"
-                    selectedVariant = "Normal"
-                    showWidgetSheet = true
-                }
+                onClick = onAddWidgetClick
             )
 
             AlternateMode(
-                checked = alternateModeEnabled,
-                onCheckedChange = { enabled ->
-                    scope.launch {
-                        if (enabled) {
-                            if (permissionHandler.isWriteSettingsGranted) {
-                                dataStore.setAlternateMode(true)
-                            } else {
-                                permissionHandler.requestWriteSettingsPermission()
-                            }
-                        } else {
-                            dataStore.setAlternateMode(false)
-                        }
-                    }
-                },
-                enabled = !coffeeActive
+                checked = coffeeState.isAlternateMode,
+                onCheckedChange = onAlternateModeChange,
+                enabled = !coffeeState.isActive
             )
         }
     }
@@ -240,13 +200,7 @@ fun HomeScreen(
                                 this[VARIANT_KEY] = variant
                             }
                         }
-
-                        if (variant == "Nothing") {
-                            com.openappslabs.coffee.widgets.NothingCoffeeWidget().update(context, glanceId)
-                        } else {
-                            com.openappslabs.coffee.widgets.CoffeeWidget().update(context, glanceId)
-                        }
-
+                        com.openappslabs.coffee.widgets.CoffeeWidget().update(context, glanceId)
                         val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                         activity?.setResult(Activity.RESULT_OK, resultValue)
                         activity?.finish()
@@ -260,39 +214,18 @@ fun HomeScreen(
     }
 }
 
-@Composable
-private fun HomeScreenActionButton(text: String, onClick: () -> Unit) {
-    FilledTonalButton(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = ActionButtonShape,
-        colors = ButtonDefaults.filledTonalButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        )
-    ) {
-        Text(text = text, style = MaterialTheme.typography.titleMedium)
-    }
-}
-
 private fun handleWidgetPinning(
     context: Context,
     shape: String,
     variant: String,
     manager: AppWidgetManager
 ) {
-    val receiverClass = if (variant == "Nothing") {
-        com.openappslabs.coffee.widgets.NothingCoffeeWidgetReceiver::class.java
-    } else {
-        com.openappslabs.coffee.widgets.CoffeeWidgetReceiver::class.java
-    }
+    val receiverClass = com.openappslabs.coffee.widgets.CoffeeWidgetReceiver::class.java
 
     if (manager.isRequestPinAppWidgetSupported) {
         val callbackIntent = Intent(context, receiverClass).apply {
-            putExtra("widget_shape", shape)
-            putExtra("widget_variant", variant)
+            putExtra(Constants.Widget.KEY_SHAPE, shape)
+            putExtra(Constants.Widget.KEY_VARIANT, variant)
         }
 
         val successCallback = PendingIntent.getBroadcast(
@@ -312,24 +245,4 @@ private fun handleWidgetPinning(
             successCallback
         )
     }
-}
-
-private suspend fun toggleCoffeeService(context: Context, dataStore: CoffeeDataStore, isActive: Boolean, duration: Int) {
-    dataStore.setCoffeeStatus(isActive)
-
-    val intent = Intent(context, CoffeeService::class.java).apply {
-        if (isActive) {
-            putExtra(CoffeeService.EXTRA_DURATION_MINUTES, duration)
-        } else {
-            action = CoffeeService.ACTION_STOP
-        }
-    }
-
-    if (isActive) {
-        ContextCompat.startForegroundService(context, intent)
-    } else {
-        context.startService(intent)
-    }
-
-    TileService.requestListeningState(context, ComponentName(context, CoffeeTileService::class.java))
 }

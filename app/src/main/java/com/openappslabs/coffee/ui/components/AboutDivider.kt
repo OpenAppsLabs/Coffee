@@ -1,0 +1,22 @@
+package com.openappslabs.coffee.ui.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+private val DividerThickness = 2.dp
+
+@Composable
+fun AboutDivider(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(DividerThickness)
+            .background(MaterialTheme.colorScheme.background)
+    )
+}
