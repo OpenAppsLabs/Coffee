@@ -1,15 +1,14 @@
-<h1 align="center">Coffee</h1>
-
 <p align="center">
     <img src="assets/images/hero-image.png" alt="Hero Banner"/>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/OpenAppsLabs/Coffee?style=for-the-badge&logo=GitHub&color=%23000000"/>
-  <img src="https://img.shields.io/github/downloads/OpenAppsLabs/Coffee/total?style=for-the-badge&logo=GitHub&color=%23000000"/>
-  <img src="https://img.shields.io/github/stars/OpenAppsLabs/Coffee?style=for-the-badge&logo=GitHub&color=%23000000"/>
-  <img src="https://img.shields.io/github/forks/OpenAppsLabs/Coffee?style=for-the-badge&logo=GitHub&color=%23000000"/>
-  <img src="https://img.shields.io/github/license/OpenAppsLabs/Coffee?style=for-the-badge&logo=GitHub&color=%23000000"/>
+    <a href="https://github.com/OpenAppsLabs/Coffee/releases"><img alt="badge" src="https://shieldcn.dev/github/OpenAppsLabs/Coffee/release.svg?variant=outline"></a>
+    <a href="https://github.com/OpenAppsLabs/Coffee/releases"><img alt="badge" src="https://shieldcn.dev/github/OpenAppsLabs/Coffee/downloads.svg?variant=outline"></a>
+    <a href="https://github.com/OpenAppsLabs/Coffee"><img alt="badge" src="https://shieldcn.dev/github/OpenAppsLabs/Coffee/stars.svg?variant=outline"></a>
+    <a href="https://github.com/OpenAppsLabs/Coffee/forks"><img alt="badge" src="https://shieldcn.dev/github/OpenAppsLabs/Coffee/forks.svg?variant=outline"></a>
+    <a href="https://github.com/OpenAppsLabs/Coffee/graphs/contributors"><img alt="badge" src="https://shieldcn.dev/github/OpenAppsLabs/Coffee/contributors.svg?variant=outline"></a>
+    <a href="https://github.com/OpenAppsLabs/Coffee"><img alt="badge" src="https://shieldcn.dev/github/OpenAppsLabs/Coffee/license.svg?variant=outline"></a>
 </p>
 
 **Keep Screen Awake**
@@ -33,7 +32,7 @@ Get the latest version of **Coffee**:
     <img src="assets/badges/get-it-on-izzyondroid.png" alt="Get it on IzzyOnDroid" height="100"/>
   </a>
 <br>
-  <a href="https://www.openapk.net/5g/com.openappslabs.coffee/">
+  <a href="https://www.openapk.net/coffee/com.openappslabs.coffee/">
     <img src="assets/badges/get-it-on-openapk.png" alt="Get it on OpenAPK" height="100"/>
   </a>
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/OpenAppsLabs/Coffee">
