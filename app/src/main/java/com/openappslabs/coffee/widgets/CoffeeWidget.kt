@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.widget.RemoteViews
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,7 +35,6 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.updateAppWidgetState
-import androidx.glance.background
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -44,7 +44,6 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.state.PreferencesGlanceStateDefinition
-import androidx.glance.text.FontFamily
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
@@ -53,6 +52,7 @@ import com.openappslabs.coffee.R
 import com.openappslabs.coffee.data.CoffeeDataStore
 import com.openappslabs.coffee.services.CoffeeService
 import com.openappslabs.coffee.services.CoffeeTileService
+import com.openappslabs.coffee.utils.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -60,23 +60,15 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-val VARIANT_KEY = stringPreferencesKey("widget_variant")
-private val SHAPE_KEY = stringPreferencesKey("widget_shape")
+val VARIANT_KEY = stringPreferencesKey(Constants.Widget.KEY_VARIANT)
+private val SHAPE_KEY = stringPreferencesKey(Constants.Widget.KEY_SHAPE)
 
-private val NothingRed = Color(0xFFD71921)
 private val BlackColor = Color(0xFF000000)
 private val DarkGray = Color(0xFF2C2C2C)
-private val NothingRedAndroid = android.graphics.Color.parseColor("#D71921")
-private val BlackAndroid = android.graphics.Color.BLACK
+private val ContentGray = Color(0xFF9E9E9E)
 
-abstract class BaseCoffeeWidget(
-    private val activeContent: ColorProvider,
-    private val inactiveContent: ColorProvider,
-    private val activeHex: Color,
-    private val inactiveHex: Color
-) : GlanceAppWidget() {
+abstract class BaseCoffeeWidget : GlanceAppWidget() {
 
-    private val ndotFont = FontFamily("ndot")
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -89,20 +81,29 @@ abstract class BaseCoffeeWidget(
             val size = LocalSize.current
             val prefs = currentState<Preferences>()
             val shapeName = prefs[SHAPE_KEY] ?: "Circle"
-            val variant = prefs[VARIANT_KEY] ?: "Normal"
+            val variant = prefs[VARIANT_KEY] ?: "Default"
 
-            val dynamicActiveHex = if (variant == "Nothing") NothingRed else BlackColor
+            val isDynamic = variant == "Material" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+            val backgroundColor = if (isDynamic) {
+                if (coffeeState.isActive) GlanceTheme.colors.primary else GlanceTheme.colors.surfaceVariant
+            } else {
+                ColorProvider(if (coffeeState.isActive) BlackColor else DarkGray)
+            }
+
+            val contentColor = if (isDynamic) {
+                if (coffeeState.isActive) GlanceTheme.colors.onPrimary else GlanceTheme.colors.onSurfaceVariant
+            } else {
+                ColorProvider(if (coffeeState.isActive) Color.White else ContentGray)
+            }
 
             GlanceTheme {
                 CoffeeWidgetContent(
                     isActive = coffeeState.isActive,
                     size = size,
                     shapeName = shapeName,
-                    variant = variant,
-                    activeContent = activeContent,
-                    inactiveContent = inactiveContent,
-                    activeHex = dynamicActiveHex,
-                    inactiveHex = DarkGray
+                    backgroundColor = backgroundColor,
+                    contentColor = contentColor
                 )
             }
         }
@@ -113,17 +114,13 @@ abstract class BaseCoffeeWidget(
         isActive: Boolean,
         size: DpSize,
         shapeName: String,
-        variant: String,
-        activeContent: ColorProvider,
-        inactiveContent: ColorProvider,
-        activeHex: Color,
-        inactiveHex: Color
+        backgroundColor: ColorProvider,
+        contentColor: ColorProvider
     ) {
         val context = LocalContext.current
 
-        val shapeBitmap = remember(size, shapeName, isActive) {
+        val shapeBitmap = remember(size, shapeName) {
             val density = context.resources.displayMetrics.density
-            val bgColor = if (isActive) activeHex else inactiveHex
 
             val isSquareShape = shapeName == "Square"
             val isRectangular = kotlin.math.abs(size.width.value - size.height.value) > 25f
@@ -134,7 +131,7 @@ abstract class BaseCoffeeWidget(
 
             WidgetShapeRenderer.createShapeBitmap(
                 shapeName = shapeName,
-                color = bgColor,
+                color = Color.White, // Always white, we'll tint it
                 widthPx = (targetWidth.value * density).toInt(),
                 heightPx = (targetHeight.value * density).toInt()
             ).apply {
@@ -158,11 +155,16 @@ abstract class BaseCoffeeWidget(
                             GlanceModifier.fillMaxSize()
                         }
                     )
-                    .background(ImageProvider(shapeBitmap))
                     .clickable(actionRunCallback<ToggleCoffeeAction>()),
                 contentAlignment = Alignment.Center
             ) {
-                WidgetLayoutBuilder(size, if (isActive) activeContent else inactiveContent, shapeName, variant)
+                Image(
+                    provider = ImageProvider(shapeBitmap),
+                    contentDescription = null,
+                    modifier = GlanceModifier.fillMaxSize(),
+                    colorFilter = ColorFilter.tint(backgroundColor)
+                )
+                WidgetLayoutBuilder(size, contentColor, shapeName)
             }
         }
     }
@@ -171,8 +173,7 @@ abstract class BaseCoffeeWidget(
     private fun WidgetLayoutBuilder(
         size: DpSize,
         contentColor: ColorProvider,
-        shapeName: String,
-        variant: String
+        shapeName: String
     ) {
         val isTall = size.height >= 100.dp
         val isWide = size.width >= 100.dp
@@ -183,29 +184,28 @@ abstract class BaseCoffeeWidget(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CoffeeIcon(contentColor)
                 if (showText) {
-                    WidgetLabel(if (variant == "Nothing") "COFFEE" else "Coffee", contentColor, variant)
+                    WidgetLabel("Coffee", contentColor)
                 }
             }
         } else {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CoffeeIcon(contentColor)
                 if (showText) {
-                    val label = if (shapeName == "Square" && isTall && !isWide) "CO\nFF\nEE" else "COFFEE"
-                    WidgetLabel(if (variant == "Nothing") label.uppercase() else label, contentColor, variant)
+                    val label = if (shapeName == "Square" && isTall && !isWide) "CO\nFF\nEE" else "Coffee"
+                    WidgetLabel(label, contentColor)
                 }
             }
         }
     }
 
     @Composable
-    private fun WidgetLabel(text: String, color: ColorProvider, variant: String) {
+    private fun WidgetLabel(text: String, color: ColorProvider) {
         Text(
             text = text,
             style = TextStyle(
                 color = color,
                 fontSize = 12.sp,
-                textAlign = TextAlign.Center,
-                fontFamily = if (variant == "Nothing") ndotFont else FontFamily.SansSerif
+                textAlign = TextAlign.Center
             ),
             modifier = GlanceModifier.padding(if (text.contains("\n")) 0.dp else 4.dp)
         )
@@ -223,8 +223,8 @@ abstract class BaseCoffeeWidget(
 }
 
 private fun handleWidgetSettings(context: Context, intent: Intent, widget: GlanceAppWidget) {
-    val shapeName = intent.getStringExtra("widget_shape") ?: return
-    val variantName = intent.getStringExtra("widget_variant") ?: return
+    val shapeName = intent.getStringExtra(Constants.Widget.KEY_SHAPE) ?: return
+    val variantName = intent.getStringExtra(Constants.Widget.KEY_VARIANT) ?: return
     val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
 
     if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
@@ -247,30 +247,10 @@ private fun handleWidgetSettings(context: Context, intent: Intent, widget: Glanc
     }
 }
 
-class CoffeeWidget : BaseCoffeeWidget(
-    activeContent = ColorProvider(R.color.coffee_active_content),
-    inactiveContent = ColorProvider(R.color.coffee_inactive_content),
-    activeHex = BlackColor,
-    inactiveHex = DarkGray
-)
-
-class NothingCoffeeWidget : BaseCoffeeWidget(
-    activeContent = ColorProvider(R.color.coffee_active_content),
-    inactiveContent = ColorProvider(R.color.coffee_inactive_content),
-    activeHex = NothingRed,
-    inactiveHex = BlackColor,
-)
+class CoffeeWidget : BaseCoffeeWidget()
 
 class CoffeeWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget = CoffeeWidget()
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        handleWidgetSettings(context, intent, glanceAppWidget)
-    }
-}
-
-class NothingCoffeeWidgetReceiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget = NothingCoffeeWidget()
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         handleWidgetSettings(context, intent, glanceAppWidget)
@@ -287,9 +267,9 @@ class ToggleCoffeeAction : ActionCallback {
 
         val intent = Intent(context, CoffeeService::class.java).apply {
             if (newState) {
-                putExtra(CoffeeService.EXTRA_DURATION_MINUTES, coffeeState.duration)
+                putExtra(Constants.Service.EXTRA_DURATION_MINUTES, coffeeState.duration)
             } else {
-                action = CoffeeService.ACTION_STOP
+                action = Constants.Service.ACTION_STOP
             }
         }
 
@@ -307,7 +287,13 @@ fun createApiPreview(context: Context, shapeName: String, variant: String): Remo
     val density = displayMetrics.density
     val sizePx = (110 * density).toInt()
 
-    val bgColor = if (variant == "Nothing") NothingRedAndroid else BlackAndroid
+    val isDynamic = variant == "Material" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val bgColor = if (isDynamic) {
+        // Fallback or preview color for Material
+        android.graphics.Color.DKGRAY
+    } else {
+        android.graphics.Color.BLACK
+    }
 
     val bitmap = WidgetShapeRenderer.createShapeBitmap(
         shapeName = shapeName,

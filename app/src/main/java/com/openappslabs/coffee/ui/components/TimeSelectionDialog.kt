@@ -17,7 +17,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,10 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.openappslabs.coffee.utils.Constants
 
 private val DialogShape = RoundedCornerShape(16.dp)
 private val ButtonShape = RoundedCornerShape(16.dp)
-private val TIME_OPTIONS = listOf(5, 15, 30, 45, 60, 0)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -72,11 +71,9 @@ fun TimeSelectionDialog(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     maxItemsInEachRow = 3
                 ) {
-                    TIME_OPTIONS.forEach { minutes ->
+                    Constants.Timer.TIME_OPTIONS.forEach { minutes ->
                         val isSelected = minutes == currentMinutes
-                        val label = remember(minutes) {
-                            if (minutes == 0) "∞" else "$minutes"
-                        }
+                        val label = "$minutes"
 
                         Button(
                             onClick = {

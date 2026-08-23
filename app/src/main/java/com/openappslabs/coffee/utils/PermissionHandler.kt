@@ -3,6 +3,7 @@ package com.openappslabs.coffee.utils
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -40,7 +41,7 @@ data class PermissionHandlerState(
 fun rememberPermissionHandler(): PermissionHandlerState {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val activity = context as? Activity
+    val activity = remember(context) { context.findActivity() }
 
     var isNotificationGranted by remember { mutableStateOf(context.hasNotificationPermission()) }
     var isBatteryIgnored by remember { mutableStateOf(context.isBatteryOptimizationIgnored()) }
@@ -48,24 +49,38 @@ fun rememberPermissionHandler(): PermissionHandlerState {
     var hasAskedNotification by remember { mutableStateOf(false) }
     var shouldShowSettingsPrompt by remember { mutableStateOf(false) }
 
+    val notificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        isNotificationGranted = granted
+        // Check for permanent denial immediately after request failure
+        if (!granted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val rationale = activity?.let {
+                ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.POST_NOTIFICATIONS)
+            } ?: false
+            if (!rationale) {
+                shouldShowSettingsPrompt = true
+            }
+        }
+    }
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 isNotificationGranted = context.hasNotificationPermission()
                 isBatteryIgnored = context.isBatteryOptimizationIgnored()
                 isWriteSettingsGranted = Settings.System.canWrite(context)
+                
+                // Hide settings prompt if user granted it in settings
+                if (isNotificationGranted) {
+                    shouldShowSettingsPrompt = false
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
-    }
-
-    val notificationLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        isNotificationGranted = granted
     }
 
     return remember(isNotificationGranted, isBatteryIgnored, isWriteSettingsGranted, shouldShowSettingsPrompt) {
@@ -110,13 +125,21 @@ fun rememberPermissionHandler(): PermissionHandlerState {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(intent)
-                shouldShowSettingsPrompt = false
             },
             dismissSettingsPrompt = {
                 shouldShowSettingsPrompt = false
             }
         )
     }
+}
+
+fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
 }
 
 fun Context.hasNotificationPermission(): Boolean {
