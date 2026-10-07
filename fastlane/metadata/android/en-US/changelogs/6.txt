@@ -1,0 +1,13 @@
+Coffee 1.5.0
+
+What's Changed
+- Completely redesigned the Home, Onboarding, and About screens with a cleaner, more modern experience.
+- Improved the timer controls and overall usability.
+- Simplified permission handling, including better recovery when permissions are denied.
+- Improved timer reliability when the device clock changes or Android restarts the background service.
+- Reduced unnecessary background activity to improve battery usage and performance.
+- Improved widgets, including dynamic colors on supported Android versions.
+- Updated Android compatibility for newer devices.
+- Removed the old "Nothing" variant and unused resources.
+- Replaced the unlimited timer option with a safer 120-minute maximum.
+- Various stability, reliability, and usability improvements.
