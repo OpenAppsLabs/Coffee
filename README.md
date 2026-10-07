@@ -1,3 +1,5 @@
+> ⚠️ **v1.5.0 crashes on launch.** Don't update. Roll back to your previous version. Fix in progress.
+
 <p align="center">
     <img src="assets/images/hero-image.png" alt="Hero Banner"/>
 </p>
