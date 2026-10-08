@@ -1,0 +1,4 @@
+Coffee 1.5.1
+
+What's Changed
+- Fixed an issue where the app could crash on startup.
