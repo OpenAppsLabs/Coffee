@@ -1,6 +1,7 @@
 package com.openappslabs.coffee.data
 
 import android.content.Context
+import androidx.compose.runtime.Immutable
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
@@ -24,6 +25,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     }
 )
 
+@Immutable
 data class CoffeeState(
     val isActive: Boolean = false,
     val duration: Int = 5,
@@ -41,6 +43,7 @@ class CoffeeDataStore(context: Context) {
         private val END_TIME = longPreferencesKey("end_time")
         private val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         private val ALTERNATE_MODE = booleanPreferencesKey("alternate_mode")
+        private val SAVED_ORIGINAL_TIMEOUT = intPreferencesKey("saved_original_timeout")
         private const val DEFAULT_DURATION = 5
     }
 
@@ -92,6 +95,20 @@ class CoffeeDataStore(context: Context) {
     suspend fun setAlternateMode(enabled: Boolean) {
         appContext.dataStore.edit { preferences ->
             preferences[ALTERNATE_MODE] = enabled
+        }
+    }
+
+    suspend fun getSavedOriginalTimeout(): Int? = appContext.dataStore.data
+        .map { it[SAVED_ORIGINAL_TIMEOUT] }
+        .first()
+
+    suspend fun setSavedOriginalTimeout(timeout: Int?) {
+        appContext.dataStore.edit { preferences ->
+            if (timeout != null) {
+                preferences[SAVED_ORIGINAL_TIMEOUT] = timeout
+            } else {
+                preferences.remove(SAVED_ORIGINAL_TIMEOUT)
+            }
         }
     }
 }

@@ -1,16 +1,12 @@
 package com.openappslabs.coffee.ui.screens.homescreen
 
 import android.app.Activity
-import android.app.PendingIntent
 import android.app.StatusBarManager
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
 import android.os.Build
-import android.os.Bundle
-import android.service.quicksettings.TileService
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,6 +33,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.appwidget.updateAll
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,9 +45,10 @@ import com.openappslabs.coffee.ui.components.HomeActionButton
 import com.openappslabs.coffee.ui.components.TimeToggleButton
 import com.openappslabs.coffee.ui.components.WidgetSheet
 import com.openappslabs.coffee.utils.Constants
+import com.openappslabs.coffee.utils.findActivity
 import com.openappslabs.coffee.utils.rememberPermissionHandler
 import com.openappslabs.coffee.widgets.VARIANT_KEY
-import com.openappslabs.coffee.widgets.createApiPreview
+import com.openappslabs.coffee.widgets.handleWidgetPinning
 import kotlinx.coroutines.launch
 
 private val SHAPE_KEY = stringPreferencesKey(Constants.Widget.KEY_SHAPE)
@@ -64,7 +62,7 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val activity = remember(context) { context as? Activity }
+    val activity = remember(context) { context.findActivity() }
     val scope = rememberCoroutineScope()
     val coffeeState by viewModel.coffeeState.collectAsStateWithLifecycle()
     val permissionHandler = rememberPermissionHandler()
@@ -193,56 +191,27 @@ fun HomeScreen(
                 scope.launch {
                     val appWidgetManager = AppWidgetManager.getInstance(context)
                     if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                        val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
-                        updateAppWidgetState<Preferences>(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
-                            prefs.toMutablePreferences().apply {
-                                this[SHAPE_KEY] = shape
-                                this[VARIANT_KEY] = variant
+                        try {
+                            val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
+                            updateAppWidgetState<Preferences>(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
+                                prefs.toMutablePreferences().apply {
+                                    this[SHAPE_KEY] = shape
+                                    this[VARIANT_KEY] = variant
+                                }
                             }
+                            com.openappslabs.coffee.widgets.CoffeeWidget().update(context, glanceId)
+                        } catch (_: Exception) {
+                            com.openappslabs.coffee.widgets.CoffeeWidget().updateAll(context)
                         }
-                        com.openappslabs.coffee.widgets.CoffeeWidget().update(context, glanceId)
                         val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                         activity?.setResult(Activity.RESULT_OK, resultValue)
                         activity?.finish()
                     } else {
-                        handleWidgetPinning(context, shape, variant, appWidgetManager)
+                        handleWidgetPinning(context, shape, variant, appWidgetManager, activity)
                     }
                     showWidgetSheet = false
                 }
             }
-        )
-    }
-}
-
-private fun handleWidgetPinning(
-    context: Context,
-    shape: String,
-    variant: String,
-    manager: AppWidgetManager
-) {
-    val receiverClass = com.openappslabs.coffee.widgets.CoffeeWidgetReceiver::class.java
-
-    if (manager.isRequestPinAppWidgetSupported) {
-        val callbackIntent = Intent(context, receiverClass).apply {
-            putExtra(Constants.Widget.KEY_SHAPE, shape)
-            putExtra(Constants.Widget.KEY_VARIANT, variant)
-        }
-
-        val successCallback = PendingIntent.getBroadcast(
-            context,
-            System.currentTimeMillis().toInt(),
-            callbackIntent,
-            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val bundle = Bundle()
-        val previewViews = createApiPreview(context, shape, variant)
-        bundle.putParcelable(AppWidgetManager.EXTRA_APPWIDGET_PREVIEW, previewViews)
-
-        manager.requestPinAppWidget(
-            ComponentName(context, receiverClass),
-            bundle,
-            successCallback
         )
     }
 }

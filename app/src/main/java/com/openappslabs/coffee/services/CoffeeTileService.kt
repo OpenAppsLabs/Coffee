@@ -4,6 +4,7 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import com.openappslabs.coffee.data.CoffeeDataStore
 import com.openappslabs.coffee.repository.CoffeeRepository
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -11,7 +12,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -25,7 +25,6 @@ class CoffeeTileService : TileService() {
 
     override fun onStartListening() {
         super.onStartListening()
-
         observationJob?.cancel()
         observationJob = serviceScope.launch {
             dataStore.coffeeState.collect { state ->
@@ -47,12 +46,10 @@ class CoffeeTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
-
         serviceScope.launch {
             try {
                 val currentState = dataStore.coffeeState.first()
                 val newActive = !currentState.isActive
-                
                 coffeeRepository.updateStatus(newActive)
                 coffeeRepository.toggleCoffee(newActive, currentState.duration)
             } catch (e: Exception) {

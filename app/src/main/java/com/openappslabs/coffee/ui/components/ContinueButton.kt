@@ -9,21 +9,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.openappslabs.coffee.ui.theme.Dimens
 
 @Composable
 fun ContinueButton(
     onClick: () -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(16.dp)
+            .height(Dimens.ButtonHeightStandard),
+        shape = RoundedCornerShape(Dimens.CornerLarge)
     ) {
         Text(
             text = "Continue",

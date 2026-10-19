@@ -21,8 +21,10 @@ import androidx.core.app.NotificationCompat
 import androidx.glance.appwidget.updateAll
 import com.openappslabs.coffee.R
 import com.openappslabs.coffee.data.CoffeeDataStore
+import com.openappslabs.coffee.repository.CoffeeRepository
 import com.openappslabs.coffee.utils.Constants
 import com.openappslabs.coffee.widgets.CoffeeWidget
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,9 +33,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
-import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import com.openappslabs.coffee.repository.CoffeeRepository
 
 @AndroidEntryPoint
 class CoffeeService : Service() {
@@ -49,7 +49,6 @@ class CoffeeService : Service() {
     }
     private lateinit var notificationBuilder: NotificationCompat.Builder
     private var endTimeMillis: Long = 0
-    private var originalTimeout: Int? = null
     private val timerRunnable = object : Runnable {
         override fun run() {
             val remainingMillis = endTimeMillis - SystemClock.elapsedRealtime()
@@ -165,14 +164,24 @@ class CoffeeService : Service() {
     private suspend fun updateScreenRetention(durationMinutes: Int) {
         val isAlternateMode = dataStore.alternateMode.first()
         if (isAlternateMode && Settings.System.canWrite(applicationContext)) {
-            if (originalTimeout == null) {
+            var timeout = dataStore.getSavedOriginalTimeout()
+            if (timeout == null) {
                 try {
-                    originalTimeout = Settings.System.getInt(contentResolver, Settings.System.SCREEN_OFF_TIMEOUT)
+                    timeout = Settings.System.getInt(contentResolver, Settings.System.SCREEN_OFF_TIMEOUT)
+                    dataStore.setSavedOriginalTimeout(timeout)
+                } catch (ignored: Exception) {
+                    timeout = null
+                }
+            }
+            if (timeout != null) {
+                try {
                     Settings.System.putInt(contentResolver, Settings.System.SCREEN_OFF_TIMEOUT, Int.MAX_VALUE)
                 } catch (ignored: Exception) {
-                    originalTimeout = null
+                    dataStore.setSavedOriginalTimeout(null)
                     manageWakeLock()
                 }
+            } else {
+                manageWakeLock()
             }
             try { if (wakeLock?.isHeld == true) wakeLock?.release() } catch (ignored: Exception) {}
         } else {
@@ -182,8 +191,8 @@ class CoffeeService : Service() {
     }
 
     private fun stopCoffee() {
-        restoreTimeout()
         serviceScope.launch {
+            restoreTimeoutSuspend()
             dataStore.setCoffeeStatus(false)
             updateTileAndWidgets()
             stopSelf()
@@ -191,13 +200,20 @@ class CoffeeService : Service() {
     }
 
     private fun restoreTimeout() {
-        originalTimeout?.let { timeout ->
+        serviceScope.launch(Dispatchers.IO) {
+            restoreTimeoutSuspend()
+        }
+    }
+
+    private suspend fun restoreTimeoutSuspend() {
+        val timeout = dataStore.getSavedOriginalTimeout()
+        if (timeout != null) {
             if (Settings.System.canWrite(applicationContext)) {
                 try {
                     Settings.System.putInt(contentResolver, Settings.System.SCREEN_OFF_TIMEOUT, timeout)
                 } catch (ignored: Exception) {}
             }
-            originalTimeout = null
+            dataStore.setSavedOriginalTimeout(null)
         }
     }
 
@@ -258,8 +274,6 @@ class CoffeeService : Service() {
 
     override fun onDestroy() {
         isRunning = false
-        restoreTimeout()
-        serviceScope.cancel()
         handler.removeCallbacksAndMessages(null)
 
         wakeLock?.let {
@@ -268,10 +282,13 @@ class CoffeeService : Service() {
             }
         }
 
-        serviceScope.launch(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+            restoreTimeoutSuspend()
             dataStore.setCoffeeStatus(false)
             updateAllWidgets()
         }
+
+        serviceScope.cancel()
 
         try { unregisterReceiver(screenStateReceiver) } catch (ignored: Exception) {}
 

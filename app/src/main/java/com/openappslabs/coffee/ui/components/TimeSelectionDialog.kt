@@ -24,24 +24,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.openappslabs.coffee.ui.theme.Dimens
 import com.openappslabs.coffee.utils.Constants
 
-private val DialogShape = RoundedCornerShape(16.dp)
-private val ButtonShape = RoundedCornerShape(16.dp)
+private val DialogShape = RoundedCornerShape(Dimens.CornerLarge)
+private val ButtonShape = RoundedCornerShape(Dimens.CornerLarge)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TimeSelectionDialog(
     currentMinutes: Int,
     onTimeSelected: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = true)
     ) {
         Card(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
             shape = DialogShape,
@@ -82,7 +84,7 @@ fun TimeSelectionDialog(
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(64.dp),
+                                .height(Dimens.ButtonHeightTall),
                             shape = ButtonShape,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isSelected)

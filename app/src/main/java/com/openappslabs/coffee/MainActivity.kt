@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.openappslabs.coffee.ui.navigation.AppNavGraph
 import com.openappslabs.coffee.ui.theme.CoffeeTheme
+import com.openappslabs.coffee.utils.Constants
 
 @dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -21,7 +22,7 @@ class MainActivity : ComponentActivity() {
             AppWidgetManager.EXTRA_APPWIDGET_ID,
             AppWidgetManager.INVALID_APPWIDGET_ID
         )
-        val openWidgetSheet = intent.getBooleanExtra("open_widget_sheet", false)
+        val openWidgetSheet = intent.getBooleanExtra(Constants.IntentExtras.EXTRA_OPEN_WIDGET_SHEET, false)
         
         enableEdgeToEdge()
         setContent {

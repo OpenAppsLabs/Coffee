@@ -1,6 +1,5 @@
 package com.openappslabs.coffee.ui.theme
 
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.toShape
@@ -11,8 +10,8 @@ import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.rectangle
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
-object WidgetExpressiveLibrary {
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+object WidgetShapeLibrary {
 
     private val rawPolygonsCache by lazy {
         mapOf(
@@ -26,6 +25,16 @@ object WidgetExpressiveLibrary {
             ),
             "Slanted" to MaterialShapes.Slanted,
             "Arch" to MaterialShapes.Arch,
+            "Arrow" to MaterialShapes.Arrow,
+            "Boom" to MaterialShapes.Boom,
+            "Burst" to MaterialShapes.Burst,
+            "Clam Shell" to MaterialShapes.ClamShell,
+            "Diamond" to MaterialShapes.Diamond,
+            "Gem" to MaterialShapes.Gem,
+            "Heart" to MaterialShapes.Heart,
+            "Pentagon" to MaterialShapes.Pentagon,
+            "Semi Circle" to MaterialShapes.SemiCircle,
+            "Triangle" to MaterialShapes.Triangle,
             "Oval" to MaterialShapes.Oval,
             "Pill" to MaterialShapes.Pill,
             "Fan" to MaterialShapes.Fan,

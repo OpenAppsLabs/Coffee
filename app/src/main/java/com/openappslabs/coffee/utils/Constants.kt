@@ -25,4 +25,8 @@ object Constants {
         const val KEY_SHAPE = "widget_shape"
         const val KEY_VARIANT = "widget_variant"
     }
+
+    object IntentExtras {
+        const val EXTRA_OPEN_WIDGET_SHEET = "open_widget_sheet"
+    }
 }
