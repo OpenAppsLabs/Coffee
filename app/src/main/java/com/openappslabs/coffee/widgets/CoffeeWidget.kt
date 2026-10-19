@@ -35,6 +35,7 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.appwidget.updateAll
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -52,6 +53,8 @@ import com.openappslabs.coffee.R
 import com.openappslabs.coffee.data.CoffeeDataStore
 import com.openappslabs.coffee.services.CoffeeService
 import com.openappslabs.coffee.services.CoffeeTileService
+import com.openappslabs.coffee.ui.theme.WidgetContentGray
+import com.openappslabs.coffee.ui.theme.WidgetDarkGray
 import com.openappslabs.coffee.utils.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,10 +65,8 @@ import kotlinx.coroutines.launch
 
 val VARIANT_KEY = stringPreferencesKey(Constants.Widget.KEY_VARIANT)
 private val SHAPE_KEY = stringPreferencesKey(Constants.Widget.KEY_SHAPE)
-
-private val BlackColor = Color(0xFF000000)
-private val DarkGray = Color(0xFF2C2C2C)
-private val ContentGray = Color(0xFF9E9E9E)
+private val DarkGray = WidgetDarkGray
+private val ContentGray = WidgetContentGray
 
 abstract class BaseCoffeeWidget : GlanceAppWidget() {
 
@@ -88,7 +89,7 @@ abstract class BaseCoffeeWidget : GlanceAppWidget() {
             val backgroundColor = if (isDynamic) {
                 if (coffeeState.isActive) GlanceTheme.colors.primary else GlanceTheme.colors.surfaceVariant
             } else {
-                ColorProvider(if (coffeeState.isActive) BlackColor else DarkGray)
+                ColorProvider(if (coffeeState.isActive) Color.Black else DarkGray)
             }
 
             val contentColor = if (isDynamic) {
@@ -131,7 +132,7 @@ abstract class BaseCoffeeWidget : GlanceAppWidget() {
 
             WidgetShapeRenderer.createShapeBitmap(
                 shapeName = shapeName,
-                color = Color.White, // Always white, we'll tint it
+                color = Color.White,
                 widthPx = (targetWidth.value * density).toInt(),
                 heightPx = (targetHeight.value * density).toInt()
             ).apply {
@@ -240,6 +241,8 @@ private fun handleWidgetSettings(context: Context, intent: Intent, widget: Glanc
                     }
                 }
                 widget.update(context, glanceId)
+            } catch (_: Exception) {
+                widget.updateAll(context)
             } finally {
                 scope.cancel()
             }
@@ -273,8 +276,7 @@ class ToggleCoffeeAction : ActionCallback {
             }
         }
 
-        if (newState) ContextCompat.startForegroundService(context, intent)
-        else context.startService(intent)
+        ContextCompat.startForegroundService(context, intent)
 
         android.service.quicksettings.TileService.requestListeningState(
             context, ComponentName(context, CoffeeTileService::class.java)
@@ -289,7 +291,6 @@ fun createApiPreview(context: Context, shapeName: String, variant: String): Remo
 
     val isDynamic = variant == "Material" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val bgColor = if (isDynamic) {
-        // Fallback or preview color for Material
         android.graphics.Color.DKGRAY
     } else {
         android.graphics.Color.BLACK
@@ -297,7 +298,7 @@ fun createApiPreview(context: Context, shapeName: String, variant: String): Remo
 
     val bitmap = WidgetShapeRenderer.createShapeBitmap(
         shapeName = shapeName,
-        color = androidx.compose.ui.graphics.Color(bgColor),
+        color = Color(bgColor),
         widthPx = sizePx,
         heightPx = sizePx
     ).apply {

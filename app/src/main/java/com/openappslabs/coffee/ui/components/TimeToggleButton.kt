@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.openappslabs.coffee.R
 import com.openappslabs.coffee.data.CoffeeState
+import com.openappslabs.coffee.ui.theme.Dimens
 
 private val ColorAnimationSpec = tween<Color>(durationMillis = 300, easing = FastOutSlowInEasing)
 private val StandardAnimationSpec = tween<Float>(durationMillis = 400, easing = FastOutSlowInEasing)
@@ -65,7 +66,6 @@ fun TimeToggleButton(
         label = "ContentColor"
     )
 
-    // Right button specific color (Active background when popup is open or coffee is active)
     val rightButtonBg by animateColorAsState(
         targetValue = if (coffeeState.isActive || showPopup) activeColor else inactiveColor,
         animationSpec = ColorAnimationSpec,
@@ -79,8 +79,8 @@ fun TimeToggleButton(
     )
 
     val rightCornerRadius by animateDpAsState(
-        targetValue = if (showPopup) 28.dp else 0.dp,
-        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        targetValue = if (showPopup) Dimens.CornerExtraLarge else 0.dp,
+        animationSpec = tween(durationMillis = Dimens.AnimDurationStandard, easing = FastOutSlowInEasing),
         label = "CornerRadius"
     )
 
@@ -93,7 +93,7 @@ fun TimeToggleButton(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(Dimens.ButtonHeightStandard),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // Left Button: Toggle Coffee
@@ -102,7 +102,7 @@ fun TimeToggleButton(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight(),
-            shape = RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp, topEnd = 0.dp, bottomEnd = 0.dp),
+            shape = RoundedCornerShape(topStart = Dimens.CornerExtraLarge, bottomStart = Dimens.CornerExtraLarge, topEnd = 0.dp, bottomEnd = 0.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = containerColor,
                 contentColor = contentColor
@@ -112,7 +112,7 @@ fun TimeToggleButton(
                 Icon(
                     painter = painterResource(id = R.drawable.app_icon),
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(Dimens.IconSmall)
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
@@ -123,7 +123,6 @@ fun TimeToggleButton(
             }
         }
 
-        // Right Button: Duration
         Button(
             onClick = { showPopup = true },
             modifier = Modifier
@@ -132,8 +131,8 @@ fun TimeToggleButton(
             shape = RoundedCornerShape(
                 topStart = rightCornerRadius, 
                 bottomStart = rightCornerRadius, 
-                topEnd = 28.dp, 
-                bottomEnd = 28.dp
+                topEnd = Dimens.CornerExtraLarge, 
+                bottomEnd = Dimens.CornerExtraLarge
             ),
             colors = ButtonDefaults.buttonColors(
                 containerColor = rightButtonBg,

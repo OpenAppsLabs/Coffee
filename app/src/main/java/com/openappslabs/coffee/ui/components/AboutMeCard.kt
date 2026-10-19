@@ -29,18 +29,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openappslabs.coffee.R
 
+import com.openappslabs.coffee.ui.theme.Dimens
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun AboutMeCard() {
+fun AboutMeCard(modifier: Modifier = Modifier) {
     val name = "rajat"
     val role = "DEVELOPER"
     val pfpShape = MaterialShapes.Cookie9Sided.toShape()
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(160.dp),
-        shape = RoundedCornerShape(16.dp),
+            .height(Dimens.CardHeightStandard),
+        shape = RoundedCornerShape(Dimens.CornerLarge),
         elevation = CardDefaults.cardElevation(0.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow

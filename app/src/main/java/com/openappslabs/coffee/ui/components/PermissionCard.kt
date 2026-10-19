@@ -32,9 +32,10 @@ fun PermissionCard(
     granted: Boolean,
     explanation: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(enabled = !granted, onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 16.dp),

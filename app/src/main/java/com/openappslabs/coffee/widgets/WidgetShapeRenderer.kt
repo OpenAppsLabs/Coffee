@@ -10,11 +10,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.createBitmap
 import androidx.graphics.shapes.toPath
-import com.openappslabs.coffee.ui.theme.WidgetExpressiveLibrary
+import com.openappslabs.coffee.ui.theme.WidgetShapeLibrary
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 object WidgetShapeRenderer {
-
     fun createShapeBitmap(
         shapeName: String,
         color: Color,
@@ -25,7 +24,6 @@ object WidgetShapeRenderer {
         val h = heightPx.coerceAtLeast(1)
         val bitmap = createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-
         val paint = Paint().apply {
             isAntiAlias = true
             style = Paint.Style.FILL
@@ -36,16 +34,13 @@ object WidgetShapeRenderer {
             val radius = minOf(w, h) * 0.2f
             canvas.drawRoundRect(0f, 0f, w.toFloat(), h.toFloat(), radius, radius, paint)
         } else {
-            val polygons = WidgetExpressiveLibrary.getRawPolygons()
+            val polygons = WidgetShapeLibrary.getRawPolygons()
             val polygon = polygons[shapeName] ?: MaterialShapes.Circle
             val path = polygon.toPath()
-
             val matrix = Matrix().apply {
                 postScale(w.toFloat(), h.toFloat())
             }
-
             path.transform(matrix)
-
             canvas.drawPath(path, paint)
         }
         return bitmap

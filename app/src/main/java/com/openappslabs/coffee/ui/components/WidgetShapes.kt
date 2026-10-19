@@ -33,19 +33,20 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.openappslabs.coffee.ui.theme.WidgetExpressiveLibrary
+import com.openappslabs.coffee.ui.theme.Dimens
+import com.openappslabs.coffee.ui.theme.WidgetShapeLibrary
 
-private val CardShape = RoundedCornerShape(16.dp)
-private val ItemShape = RoundedCornerShape(16.dp)
+private val CardShape = RoundedCornerShape(Dimens.CornerLarge)
+private val ItemShape = RoundedCornerShape(Dimens.CornerLarge)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SelectShape(
+fun WidgetShapes(
     selectedShapeName: String,
     onShapeSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val rawPolygonList = remember { WidgetExpressiveLibrary.getRawPolygons().toList() }
+    val rawPolygonList = remember { WidgetShapeLibrary.getRawPolygons().toList() }
 
     val currentSelection = remember(selectedShapeName) {
         if (selectedShapeName.isEmpty() && rawPolygonList.isNotEmpty()) {
@@ -81,7 +82,7 @@ fun SelectShape(
                 columns = GridCells.Fixed(5),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp),
+                    .weight(1f),
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)

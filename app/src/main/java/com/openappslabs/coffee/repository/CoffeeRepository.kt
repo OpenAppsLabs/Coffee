@@ -27,11 +27,7 @@ class CoffeeRepository @Inject constructor(
             }
         }
 
-        if (isActive) {
-            ContextCompat.startForegroundService(context, intent)
-        } else {
-            context.startService(intent)
-        }
+        ContextCompat.startForegroundService(context, intent)
 
         requestTileUpdate()
     }

@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+import com.openappslabs.coffee.ui.theme.Dimens
+
 @Composable
 fun PermissionSettingsCard(
     onOpenSettings: () -> Unit,
@@ -27,7 +29,7 @@ fun PermissionSettingsCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(Dimens.CornerLarge)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -46,7 +48,7 @@ fun PermissionSettingsCard(
             FilledTonalButton(
                 onClick = onOpenSettings,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(Dimens.CornerMedium),
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
