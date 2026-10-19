@@ -1,0 +1,13 @@
+Coffee 1.6.0
+
+What's New
+- Added 10 more shapes, bringing the total to 35 unique design options.
+- Redesigned the setup interface to place shape previews and color theme options side by side.
+
+What's Changed
+- Extracted and isolated the widget pinning logic.
+- The core Coffee service now consistently launches in the foreground, ensuring the operating system does not accidentally terminate it during background tasks.
+
+Bug Fixes & Reliability
+- The app now persists and remembers your original system screen timeout. If your device restarts unexpectedly, your original settings are safely restored.
+- Fixed an issue where newly placed Home Screen widgets would appear entirely transparent or fail to respond to touch inputs.
