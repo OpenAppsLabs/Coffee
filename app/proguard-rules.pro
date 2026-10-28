@@ -20,6 +20,8 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# WorkManager / Room
--keep class androidx.work.impl.WorkDatabase { *; }
--keep class * extends androidx.room.RoomDatabase { *; }
+# Glance Crash
+-keep public class com.openappslabs.coffee.widgets.ToggleCoffeeAction {
+    public <init>(...);
+}
+-keepnames class com.openappslabs.coffee.widgets.ToggleCoffeeAction
