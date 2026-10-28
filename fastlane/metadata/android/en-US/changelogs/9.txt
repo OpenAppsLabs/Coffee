@@ -1,0 +1,4 @@
+Coffee 1.6.1
+
+Bug Fixes & Reliability
+- Fixed an issue widgets would appear entirely transparent or fail to respond to touch inputs. (Fixed this time hopefully)
